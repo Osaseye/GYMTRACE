@@ -112,7 +112,7 @@ const LoginPage = () => {
       {/* 3. Footer */}
       <div className="mt-12 text-center text-xs text-slate-400 dark:text-slate-500 font-medium">
         <p> Secure Access Portal • Babcock University Gym Management</p>
-        <p className="mt-2 uppercase tracking-widest">© 2024 GYMTRACE PLATFORM</p>
+        <p className="mt-2 uppercase tracking-widest">© 2026 GYMTRACE PLATFORM</p>
       </div>
     </div>
   );
