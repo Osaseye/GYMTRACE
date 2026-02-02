@@ -1,0 +1,34 @@
+/* 1. Box Sizing 
+   Ensures padding and borders don't increase the width of elements */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* 2. Reset Margins and Padding 
+   Removes the default 'white space' around the edges of the page */
+* {
+  margin: 0;
+  padding: 0;
+}
+
+/* 3. Improve Media Defaults 
+   Prevents images from being larger than their container */
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* 4. Font Consistency 
+   Inherits fonts for inputs and buttons (they don't by default) */
+input, button, textarea, select {
+  font: inherit;
+}
+
+/* 5. Root Setup 
+   Ensures the body fills the whole screen height */
+body {
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  font-family: system-ui, sans-serif;
+}
