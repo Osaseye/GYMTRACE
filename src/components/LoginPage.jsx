@@ -1,14 +1,10 @@
-import { Mail, Lock, LogIn, Moon } from 'lucide-react'; // Using Lucide for icons
+import { Mail, Lock, LogIn, Moon } from 'lucide-react';
 
 import logo from '../assets/logo.png'
 
 const LoginPage = () => {
 
   return (
-
-    // min-h-screen: Takes full height | bg-slate-50: Light gray background
-
-    // flex items-center justify-center: Centers everything perfectly
 
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 relative">
 
@@ -25,8 +21,6 @@ const LoginPage = () => {
 
 
       {/* 2. Login Card */}
-
-      {/* w-full max-w-md: Limits width | rounded-3xl: Very rounded corners | shadow-2xl: Deep shadow */}
 
       <div className="bg-white w-full max-w-md p-8 rounded-3xl border border-slate-100">
 
