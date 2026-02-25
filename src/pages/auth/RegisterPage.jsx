@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, User, ArrowRight } from 'lucide-react'; // Added User and ArrowRight icons
-import logo from '../assets/logo.png';
+import { Link } from 'react-router-dom';
+import logo from '../../assets/logo.png';
 
 const RegisterPage = () => {
   // STATE: We need to remember which role the user selected (Member or Trainer)
@@ -106,8 +107,8 @@ const RegisterPage = () => {
         </form>
 
         <div className="mt-8 text-center">
-          <p className="text-slate-600 text-sm font-medium">
-            Already have an account? <a href="#" className="text-emerald-600 font-bold hover:underline">Sign in</a>
+          <p className="text-slate-600">
+            Already have an account? <Link to="/login" className="text-emerald-600 font-bold hover:underline">Sign in</Link>
           </p>
         </div>
       </div>

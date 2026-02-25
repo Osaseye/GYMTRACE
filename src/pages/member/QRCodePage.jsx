@@ -8,7 +8,7 @@ import {
   User,
   QrCode // Added this icon for the placeholder
 } from 'lucide-react';
-import logo from '../assets/logo.png';
+import logo from '../../assets/logo.png';
 
 const QRCodePage = () => {
   // --- REACT LOGIC: The Countdown Timer ---

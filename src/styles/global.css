@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* Simple glass effect */
+  .glass-effect {
+    @apply backdrop-blur-md bg-white/70 border border-white/20 shadow-lg;
+  }
+}
+
+/* Background gradient for Hero */
+.hero-gradient {
+  background: radial-gradient(circle at 50% 0%, rgba(31, 210, 134, 0.15) 0%, rgba(246, 248, 250, 0) 70%);
+}
+
+/* Base styles for document flow */
+body {
+  @apply text-gray-800 bg-background-light font-sans antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-display;
+}

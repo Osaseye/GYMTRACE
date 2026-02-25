@@ -1,6 +1,7 @@
 import { Mail, Lock, LogIn, Moon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-import logo from '../assets/logo.png'
+import logo from '../../assets/logo.png'
 
 const LoginPage = () => {
 
@@ -69,8 +70,8 @@ const LoginPage = () => {
             <div className="flex justify-between mb-2">
 
               <label className="text-sm font-semibold text-slate-700">Password</label>
+              <Link to="/forgot-password" className="text-sm text-emerald-600 font-bold hover:underline">Forgot password?</Link>
 
-              <a href="#" className="text-sm text-emerald-600 font-bold hover:underline">Forgot password?</a>
 
             </div>
 
@@ -124,7 +125,7 @@ const LoginPage = () => {
 
           <p className="text-slate-600 text-sm font-medium">
 
-            Don't have an account? <a href="#" className="text-emerald-600 font-bold hover:underline">Register as Student/Staff</a>
+            Don't have an account? <Link to="/register" className="text-emerald-600 font-bold hover:underline">Register as Student/Staff</Link>
 
           </p>
 
@@ -140,7 +141,7 @@ const LoginPage = () => {
 
         <p> Secure Access Portal • Babcock University Gym Management</p>
 
-        <p className="mt-2 uppercase tracking-widest">© 2024 GYMTRACE PLATFORM</p>
+        <p className="mt-2 uppercase tracking-widest">© 2026 GYMTRACE PLATFORM</p>
 
       </div>
 
