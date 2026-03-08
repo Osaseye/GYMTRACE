@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import QrReader from 'react-qr-scanner';
+import { Scanner } from '@yudiel/react-qr-scanner';
 import { 
   ScanLine, 
   CheckCircle, 
@@ -110,16 +110,21 @@ const ScannerPage = () => {
             <div className="bg-black rounded-2xl overflow-hidden shadow-lg relative aspect-video flex items-center justify-center">
                 {isScanning && !scanResult ? (
                     <div className="w-full h-full relative">
-                        <QrReader
-                            delay={300}
-                            onError={handleError}
-                            onScan={(data) => {
-                                if (data) processScan(data);
+                        <Scanner
+                            onScan={(result) => {
+                                if (result && result.length > 0) {
+                                    processScan(result[0].rawValue);
+                                }
                             }}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            constraints={{
+                            onError={(error) => {
+                                if (error) handleError(error);
+                            }}
+                            styles={{ 
+                                container: { width: '100%', height: '100%', objectFit: 'cover' } 
+                            }}
+                            components={{
                                 audio: false,
-                                video: { facingMode: 'environment' }
+                                finder: false // Using our own overlay below
                             }}
                         />
                         {/* Overlay Guide */}
