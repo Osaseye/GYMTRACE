@@ -500,9 +500,3 @@ const WorkoutsPage = () => {
 };
 
 export default WorkoutsPage;
-      </div>
-    </div>
-  );
-};
-
-export default WorkoutsPage;
