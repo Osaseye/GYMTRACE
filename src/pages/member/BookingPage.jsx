@@ -1,31 +1,76 @@
-import React, { useState } from 'react';
-import { Search, Filter, Calendar, Star, MapPin, ChevronRight, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Calendar, Star, ChevronRight, X, Loader2, Clock } from 'lucide-react';
+import { toast } from 'sonner';
+import { useAuth } from '../../context/AuthContext';
+import { getAllTrainers } from '../../services/trainerService';
+import { createBooking } from '../../services/bookingService';
+import { createSession } from '../../services/sessionService';
 
-const specialties = [
-  'All',
-  'Bodybuilding',
-  'Cardio',
-  'Yoga',
-  'CrossFit',
-  'Rehabilitation',
-  'Powerlifting',
-  'Nutrition'
-];
-
-const trainers = [
-  // Empty data for backend integration
-];
+const specialties = ['All', 'Bodybuilding', 'Cardio', 'Yoga', 'CrossFit', 'Rehabilitation', 'Powerlifting', 'Nutrition'];
 
 const BookingPage = () => {
+  const { user, userData } = useAuth();
+  const [trainers, setTrainers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedSpecialty, setSelectedSpecialty] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [bookingModal, setBookingModal] = useState(null);
+  const [bookingDate, setBookingDate] = useState('');
+  const [bookingTime, setBookingTime] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const filteredTrainers = trainers.filter(trainer => {
-    const matchesSpecialty = selectedSpecialty === 'All' || trainer.specialties.includes(selectedSpecialty);
-    const matchesSearch = trainer.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          trainer.role.toLowerCase().includes(searchQuery.toLowerCase());
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await getAllTrainers();
+        setTrainers(data.filter((t) => t.status === 'active'));
+      } catch {
+        toast.error('Failed to load trainers');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  const filteredTrainers = trainers.filter((trainer) => {
+    const matchesSpecialty = selectedSpecialty === 'All' || (trainer.specialty || '').toLowerCase().includes(selectedSpecialty.toLowerCase());
+    const matchesSearch = (trainer.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (trainer.specialty || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSpecialty && matchesSearch;
   });
+
+  const handleBook = async () => {
+    if (!bookingDate || !bookingTime) {
+      toast.error('Please select a date and time');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const shared = {
+        memberId: user.uid,
+        memberName: userData?.name || 'Member',
+        trainerId: bookingModal.uid,
+        trainerName: bookingModal.name,
+        date: bookingDate,
+        time: bookingTime,
+      };
+      await Promise.all([
+        createBooking({ ...shared, sessionType: 'Personal Training' }),
+        createSession({ ...shared, duration: '1h', type: 'Personal Training' }),
+      ]);
+      toast.success(`Session booked with ${bookingModal.name}!`);
+      setBookingModal(null);
+      setBookingDate('');
+      setBookingTime('');
+    } catch {
+      toast.error('Failed to book session');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const getInitials = (name) => (name || '?').split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
     <div className="min-h-screen bg-background-light p-6 lg:p-8 font-sans">
@@ -49,89 +94,83 @@ const BookingPage = () => {
             />
           </div>
           <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-             <span className="text-gray-500 text-sm whitespace-nowrap">Filter by:</span>
-             <div className="flex gap-2">
-                {specialties.slice(0, 5).map((spec) => (
-                  <button
-                    key={spec}
-                    onClick={() => setSelectedSpecialty(spec)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
-                      selectedSpecialty === spec
-                        ? 'bg-primary text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {spec}
-                  </button>
-                ))}
-             </div>
+            <span className="text-gray-500 text-sm whitespace-nowrap">Filter by:</span>
+            <div className="flex gap-2">
+              {specialties.slice(0, 5).map((spec) => (
+                <button
+                  key={spec}
+                  onClick={() => setSelectedSpecialty(spec)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                    selectedSpecialty === spec
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {spec}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Trainers Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-12">
-        {filteredTrainers.map((trainer) => (
-          <div key={trainer.id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-shadow">
-            <div className="h-48 overflow-hidden relative">
-               <img 
-                 src={trainer.image} 
-                 alt={trainer.name} 
-                 className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-               />
-               <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold text-background-dark flex items-center gap-1 shadow-sm">
-                 <Star className="text-yellow-400 fill-yellow-400" size={12} />
-                 {trainer.rating} ({trainer.reviews})
-               </div>
-            </div>
-            
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h3 className="font-display font-bold text-lg text-background-dark">{trainer.name}</h3>
-                  <p className="text-primary text-sm font-medium">{trainer.role}</p>
-                </div>
-                <span className="text-gray-900 font-bold bg-gray-100 px-2 py-1 rounded text-sm">{trainer.price}</span>
-              </div>
-              
-              <p className="text-gray-600 text-sm mb-4 line-clamp-2">{trainer.bio}</p>
-              
-              <div className="flex flex-wrap gap-2 mb-4">
-                {trainer.specialties.map((spec, index) => (
-                  <span key={index} className="text-xs bg-gray-50 text-gray-500 px-2 py-1 rounded border border-gray-100">
-                    {spec}
-                  </span>
-                ))}
-              </div>
-              
-              <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-                <Calendar size={16} className="text-primary" />
-                <span>Available: {trainer.availability}</span>
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-12">
+          {filteredTrainers.map((trainer) => (
+            <div key={trainer.uid} className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-shadow">
+              <div className="h-48 overflow-hidden relative bg-gradient-to-br from-emerald-100 to-blue-100 flex items-center justify-center">
+                <span className="text-5xl font-bold text-emerald-600/40">{getInitials(trainer.name)}</span>
               </div>
 
-              <button className="w-full bg-background-dark text-white py-3 rounded-lg font-medium hover:bg-blue-900 transition-colors flex items-center justify-center gap-2 group">
-                Book Session
-                <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="font-display font-bold text-lg text-background-dark">{trainer.name}</h3>
+                    <p className="text-primary text-sm font-medium">{trainer.specialty || 'General Training'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                  <Star className="text-yellow-400 fill-yellow-400" size={14} />
+                  <span>5.0</span>
+                </div>
+
+                {trainer.phone && (
+                  <p className="text-sm text-gray-500 mb-4">{trainer.phone}</p>
+                )}
+
+                <button
+                  onClick={() => setBookingModal(trainer)}
+                  className="w-full bg-background-dark text-white py-3 rounded-lg font-medium hover:bg-blue-900 transition-colors flex items-center justify-center gap-2 group"
+                >
+                  Book Session
+                  <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {filteredTrainers.length === 0 && (
+            <div className="col-span-full py-12 text-center text-gray-500">
+              <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search size={24} className="text-gray-400" />
+              </div>
+              <p>No trainers found matching your criteria.</p>
+              <button
+                onClick={() => { setSearchQuery(''); setSelectedSpecialty('All'); }}
+                className="mt-4 text-primary font-medium hover:underline"
+              >
+                Clear filters
               </button>
             </div>
-          </div>
-        ))}
-
-        {filteredTrainers.length === 0 && (
-           <div className="col-span-full py-12 text-center text-gray-500">
-             <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-               <Search size={24} className="text-gray-400" />
-             </div>
-             <p>No trainers found matching your criteria.</p>
-             <button 
-               onClick={() => {setSearchQuery(''); setSelectedSpecialty('All');}}
-               className="mt-4 text-primary font-medium hover:underline"
-             >
-               Clear filters
-             </button>
-           </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* "Not Sure" Section */}
       <div className="bg-gradient-to-r from-background-dark to-blue-900 rounded-2xl p-8 md:p-12 text-white relative overflow-hidden mb-8">
@@ -142,10 +181,78 @@ const BookingPage = () => {
             Take our quick 2-minute assessment and get matched with the perfect coach based on your goals, schedule, and preferences.
           </p>
           <button className="bg-primary text-white px-8 py-3 rounded-lg font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/25">
-             Start Assessment
+            Start Assessment
           </button>
         </div>
       </div>
+
+      {/* Booking Modal */}
+      {bookingModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setBookingModal(null)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-bold text-gray-900">Book Session</h2>
+              <button onClick={() => setBookingModal(null)} className="p-1 text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="bg-gray-50 rounded-xl p-4 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold">
+                {getInitials(bookingModal.name)}
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">{bookingModal.name}</p>
+                <p className="text-sm text-gray-500">{bookingModal.specialty || 'General Training'}</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1 flex items-center gap-1">
+                  <Calendar size={14} /> Date
+                </label>
+                <input
+                  type="date"
+                  value={bookingDate}
+                  min={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setBookingDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1 flex items-center gap-1">
+                  <Clock size={14} /> Time
+                </label>
+                <select
+                  value={bookingTime}
+                  onChange={(e) => setBookingTime(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+                >
+                  <option value="">Select time</option>
+                  {['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'].map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setBookingModal(null)} className="flex-1 py-2.5 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-50 transition-colors">
+                Cancel
+              </button>
+              <button
+                onClick={handleBook}
+                disabled={submitting}
+                className="flex-1 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {submitting && <Loader2 size={16} className="animate-spin" />}
+                Confirm Booking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

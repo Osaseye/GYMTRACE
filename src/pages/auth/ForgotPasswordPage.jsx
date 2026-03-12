@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { resetPassword } from '../../services/authService';
 import logo from '../../assets/logo.png';
 
 const forgotPasswordSchema = z.object({
@@ -27,15 +28,10 @@ const ForgotPasswordPage = () => {
 
   const onSubmit = async (data) => {
     try {
-      // Mock API call
-      console.log('Forgot Password Data:', data);
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate delay
-      
+      await resetPassword(data.email);
       toast.success('Password reset link sent! Check your email.');
-      // navigate('/login'); // Optional: navigate to login or stay
     } catch (error) {
       toast.error('Failed to send reset link. Please try again.');
-      console.error(error);
     }
   };
 

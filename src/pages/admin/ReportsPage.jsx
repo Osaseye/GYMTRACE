@@ -1,14 +1,48 @@
-import React, { useState } from 'react';
-import { BarChart, DollarSign, Users, TrendingUp, Calendar, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { DollarSign, Users, TrendingUp, Calendar, ArrowUpRight, Loader2 } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { getAdminStats, getMonthlyGrowth, getWeeklyCheckIns } from '../../services/adminService';
 
 const ReportsPage = () => {
-  const [activeTab, setActiveTab] = useState('financial');
+  const [activeTab, setActiveTab] = useState('attendance');
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ totalMembers: 0, totalTrainers: 0, todayCheckIns: 0 });
+  const [growthData, setGrowthData] = useState([]);
+  const [weeklyData, setWeeklyData] = useState([]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [s, growth, weekly] = await Promise.all([
+          getAdminStats(),
+          getMonthlyGrowth(),
+          getWeeklyCheckIns(),
+        ]);
+        setStats(s);
+        setGrowthData(growth);
+        setWeeklyData(weekly);
+      } catch {
+        // silent
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   const tabs = [
-    { id: 'financial', label: 'Financial', icon: DollarSign },
     { id: 'attendance', label: 'Attendance', icon: Calendar },
     { id: 'growth', label: 'User Growth', icon: TrendingUp },
+    { id: 'financial', label: 'Financial', icon: DollarSign },
   ];
+
+  const chartData = activeTab === 'attendance' ? weeklyData : activeTab === 'growth' ? growthData : [];
+  const dataKey = activeTab === 'attendance' ? 'count' : 'count';
+  const xKey = activeTab === 'attendance' ? 'day' : 'month';
+  const barColor = activeTab === 'attendance' ? '#10b981' : activeTab === 'growth' ? '#3b82f6' : '#f59e0b';
+
+  const totalAttendance = weeklyData.reduce((sum, d) => sum + d.count, 0);
+  const totalGrowth = growthData.reduce((sum, d) => sum + d.count, 0);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -44,34 +78,35 @@ const ReportsPage = () => {
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-semibold text-gray-900">
                 {activeTab === 'financial' && 'Revenue Overview'}
-                {activeTab === 'attendance' && 'Daily Attendance'}
-                {activeTab === 'growth' && 'New Registrations'}
+                {activeTab === 'attendance' && 'Daily Attendance (Last 7 Days)'}
+                {activeTab === 'growth' && 'New Registrations (Last 6 Months)'}
               </h3>
-              <select className="text-sm border-gray-200 rounded-lg p-2 bg-gray-50">
-                <option>Last 7 Days</option>
-                <option>Last 30 Days</option>
-                <option>Last Year</option>
-              </select>
             </div>
             
-            {/* Placeholder Chart */}
-            <div className="w-full h-80 bg-gray-50 rounded-lg flex items-center justify-center p-4 px-8 gap-4 border-2 border-dashed border-gray-200">
-               <span className="text-gray-400">Charts will appear once data is available</span>
-            </div>
-            {/* 
-            <div className="w-full h-80 bg-gray-50 rounded-lg flex items-end justify-between p-4 px-8 gap-4">
-              {[65, 40, 75, 55, 80, 60, 90, 45, 70, 85, 50, 95].map((height, i) => (
-                <div key={i} className="relative w-full bg-blue-100 rounded-t-sm group hover:bg-blue-200 transition-colors" style={{ height: `${height}%` }}>
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                    {height * 10}
-                  </div>
+            <div className="w-full h-80">
+              {loading ? (
+                <div className="h-full flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
                 </div>
-              ))}
-            </div> 
-            */}
-            <div className="flex justify-between mt-4 text-xs text-gray-400 px-2">
-              <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span>
-              <span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span>
+              ) : activeTab === 'financial' ? (
+                <div className="h-full flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
+                  Revenue tracking is mocked — no real payment data
+                </div>
+              ) : chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                    <XAxis dataKey={xKey} axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} allowDecimals={false} />
+                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                    <Bar dataKey={dataKey} fill={barColor} radius={[4, 4, 0, 0]} barSize={32} name={activeTab === 'attendance' ? 'Check-ins' : 'New Members'} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-gray-400">
+                  No data available yet
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -81,26 +116,55 @@ const ReportsPage = () => {
           {/* Key Metric Card 1 */}
           <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-500 text-sm">Total {activeTab === 'financial' ? 'Earnings' : activeTab === 'attendance' ? 'Visits' : 'Members'}</span>
+              <span className="text-gray-500 text-sm">
+                {activeTab === 'financial' ? 'Total Earnings' : activeTab === 'attendance' ? 'Week Visits' : 'Total Members'}
+              </span>
               <span className="p-2 bg-green-50 text-green-600 rounded-lg">
                 <ArrowUpRight size={20} />
               </span>
             </div>
             <div className="text-3xl font-bold text-gray-900 mb-1">
-              {activeTab === 'financial' ? '₦0' : activeTab === 'attendance' ? '0' : '0'}
+              {loading ? (
+                <Loader2 className="w-6 h-6 animate-spin text-gray-300" />
+              ) : activeTab === 'financial' ? (
+                '₦0'
+              ) : activeTab === 'attendance' ? (
+                totalAttendance
+              ) : (
+                stats.totalMembers
+              )}
             </div>
             <div className="text-sm text-gray-400 flex items-center gap-1">
               <TrendingUp size={16} />
-              <span>No data yet</span>
+              <span>{activeTab === 'attendance' ? 'Last 7 days' : activeTab === 'growth' ? 'All time' : 'Mocked'}</span>
             </div>
           </div>
 
           {/* Key Metric Card 2 */}
           <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-             <h4 className="font-semibold text-gray-900 mb-4">Top Performing</h4>
-             <div className="space-y-4">
-                 <div className="text-sm text-gray-500 text-center py-4">No data available</div>
-             </div>
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-gray-500 text-sm">
+                {activeTab === 'attendance' ? "Today's Check-ins" : activeTab === 'growth' ? 'Recent Growth' : 'Trainers'}
+              </span>
+              <span className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                <Users size={20} />
+              </span>
+            </div>
+            <div className="text-3xl font-bold text-gray-900 mb-1">
+              {loading ? (
+                <Loader2 className="w-6 h-6 animate-spin text-gray-300" />
+              ) : activeTab === 'attendance' ? (
+                stats.todayCheckIns
+              ) : activeTab === 'growth' ? (
+                totalGrowth
+              ) : (
+                stats.totalTrainers
+              )}
+            </div>
+            <div className="text-sm text-gray-400 flex items-center gap-1">
+              <TrendingUp size={16} />
+              <span>{activeTab === 'attendance' ? 'Today' : activeTab === 'growth' ? 'Last 6 months' : 'Active'}</span>
+            </div>
           </div>
         </div>
 

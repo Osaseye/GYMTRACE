@@ -10,13 +10,15 @@ import {
   ScanLine
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { logoutUser } from '../../../services/authService';
 import logo from '../../../assets/logo.png';
 
 const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logoutUser();
     toast.success('Logged out successfully');
     navigate('/admin/login');
   };

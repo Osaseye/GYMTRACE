@@ -1,37 +1,77 @@
-import React, { useState } from 'react';
-import { Save, Building, Mail, Phone, Lock, CreditCard, ToggleLeft, ToggleRight, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Save, Building, Mail, Phone, Lock, CreditCard, AlertTriangle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { getSettings, saveSettings } from '../../services/settingsService';
 
 const SettingsPage = () => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
 
   const [formData, setFormData] = useState({
-    gymName: 'GYMTRACE Fitness',
-    email: 'admin@gymtrace.com',
-    phone: '+1 (555) 123-4567',
-    basicPrice: 29.99,
-    premiumPrice: 59.99,
+    gymName: '',
+    email: '',
+    phone: '',
+    basicPrice: 0,
+    premiumPrice: 0,
   });
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await getSettings();
+        if (data) {
+          setFormData({
+            gymName: data.gymName || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            basicPrice: data.basicPrice ?? 0,
+            premiumPrice: data.premiumPrice ?? 0,
+          });
+          setMaintenanceMode(data.maintenanceMode || false);
+        }
+      } catch {
+        toast.error('Failed to load settings');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    setSaving(true);
+    try {
+      await saveSettings({
+        ...formData,
+        basicPrice: Number(formData.basicPrice),
+        premiumPrice: Number(formData.premiumPrice),
+        maintenanceMode,
+      });
       toast.success('Settings saved successfully!');
-    }, 1000);
+    } catch {
+      toast.error('Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const toggleMaintenance = () => {
-    setMaintenanceMode(!maintenanceMode);
-    toast.info(`Maintenance mode ${!maintenanceMode ? 'enabled' : 'disabled'}`);
+  const toggleMaintenance = async () => {
+    const next = !maintenanceMode;
+    setMaintenanceMode(next);
+    try {
+      await saveSettings({ maintenanceMode: next });
+      toast.info(`Maintenance mode ${next ? 'enabled' : 'disabled'}`);
+    } catch {
+      setMaintenanceMode(!next);
+      toast.error('Failed to update maintenance mode');
+    }
   };
 
   return (
@@ -43,11 +83,11 @@ const SettingsPage = () => {
         </div>
         <button 
           onClick={handleSave}
-          disabled={loading}
+          disabled={saving || loading}
           className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          {saving ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
             <Save size={20} />
           )}

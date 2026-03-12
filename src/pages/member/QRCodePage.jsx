@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import QRCode from 'react-qr-code';
+import { QRCodeCanvas as QRCode } from 'qrcode.react';
 import { 
   RefreshCw, 
   Shield, 
@@ -9,23 +9,17 @@ import {
   CalendarCheck,
   Headset
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import logo from '../../assets/logo.png';
 
 const QRCodePage = () => {
+  const { user, userData } = useAuth();
   const [timeLeft, setTimeLeft] = useState(60);
   const [qrValue, setQrValue] = useState("");
-  
-  // Mock User Data
-  const user = {
-    id: "MEM-2024-001",
-    name: "Daniel Okon",
-    role: "member"
-  };
 
   const generateQRCallback = () => {
-    // Generate a secure string (Mock implementation)
     const secureData = JSON.stringify({
-      userId: user.id,
+      userId: user?.uid,
       timestamp: Date.now(),
       validity: "60s"
     });
@@ -63,8 +57,8 @@ const QRCodePage = () => {
 
         <div className="flex items-center space-x-3">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold text-slate-800">{user.name}</p>
-            <p className="text-xs text-slate-500">Member ID: {user.id}</p>
+            <p className="text-sm font-bold text-slate-800">{userData?.name || 'Member'}</p>
+            <p className="text-xs text-slate-500">Member ID: {user?.uid?.slice(0, 8)}</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center border-2 border-emerald-500 shadow-sm">
             <User className="w-5 h-5 text-emerald-600" />

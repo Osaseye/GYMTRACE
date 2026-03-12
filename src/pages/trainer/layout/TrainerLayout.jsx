@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -8,11 +8,24 @@ import {
   LogOut,
   Settings
 } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
+import { logoutUser } from '../../../services/authService';
 import logo from '../../../assets/logo.png';
 
 const TrainerLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { userData } = useAuth();
+
+  const initials = userData?.name
+    ? userData.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+    : '??';
+
+  const handleLogout = async () => {
+    await logoutUser();
+    navigate('/login');
+  };
 
   const navItems = [
     { name: 'Dashboard', path: '/trainer/dashboard', icon: LayoutDashboard },
@@ -67,15 +80,15 @@ const TrainerLayout = () => {
         <div className="p-4 border-t border-gray-100">
           <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 cursor-pointer transition-all group">
             <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-sm border-2 border-white shadow-sm">
-              JD
+              {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">John Doe</p>
+              <p className="text-sm font-semibold text-gray-900 truncate">{userData?.name || 'Trainer'}</p>
               <p className="text-xs text-gray-500 truncate flex items-center gap-1">
-                Senior Trainer
+                Trainer
               </p>
             </div>
-            <LogOut size={18} className="text-gray-400 group-hover:text-red-500 transition-colors" />
+            <LogOut size={18} onClick={handleLogout} className="text-gray-400 group-hover:text-red-500 transition-colors" />
           </div>
         </div>
       </aside>
@@ -91,7 +104,7 @@ const TrainerLayout = () => {
               <span className="font-display font-bold text-gray-900 text-lg">GYMTRACE</span>
           </div>
           <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center border border-emerald-200">
-             <span className="text-xs font-bold text-emerald-700">JD</span>
+             <span className="text-xs font-bold text-emerald-700">{initials}</span>
           </div>
         </div>
 

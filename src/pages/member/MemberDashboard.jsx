@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   QrCode, 
   Moon, 
@@ -14,11 +14,15 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { useAuth } from '../../context/AuthContext';
+import { getAttendanceByMember, getWeeklyAttendance } from '../../services/attendanceService';
+import { getBookingsByMember } from '../../services/bookingService';
 
 const MemberDashboard = () => {
-    // Mock data for the chart
-    // Initialize empty for waiting API data
-    const data = [
+    const { user, userData } = useAuth();
+    const firstName = userData?.name?.split(' ')[0] || 'Member';
+
+    const [weeklyData, setWeeklyData] = useState([
       { name: 'Mon', visits: 0 },
       { name: 'Tue', visits: 0 },
       { name: 'Wed', visits: 0 },
@@ -26,7 +30,37 @@ const MemberDashboard = () => {
       { name: 'Fri', visits: 0 },
       { name: 'Sat', visits: 0 },
       { name: 'Sun', visits: 0 },
-    ];
+    ]);
+    const [lastCheckIn, setLastCheckIn] = useState(null);
+    const [totalVisits, setTotalVisits] = useState(0);
+    const [nextBooking, setNextBooking] = useState(null);
+
+    useEffect(() => {
+      if (!user) return;
+      const load = async () => {
+        try {
+          const [weekly, all, bookings] = await Promise.all([
+            getWeeklyAttendance(user.uid),
+            getAttendanceByMember(user.uid),
+            getBookingsByMember(user.uid),
+          ]);
+          setWeeklyData(weekly);
+          setTotalVisits(all.length);
+          if (all.length > 0 && all[0].checkIn?.toDate) {
+            setLastCheckIn(all[0].checkIn.toDate());
+          }
+          // Find the nearest upcoming booking
+          const todayStr = new Date().toISOString().slice(0, 10);
+          const upcoming = bookings
+            .filter((b) => b.status === 'confirmed' && b.date >= todayStr)
+            .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+          if (upcoming.length > 0) setNextBooking(upcoming[0]);
+        } catch {
+          // silent
+        }
+      };
+      load();
+    }, [user]);
   
     return (
       <div className="p-6 space-y-8 font-sans max-w-7xl mx-auto">
@@ -34,7 +68,7 @@ const MemberDashboard = () => {
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-display font-bold text-gray-900">
-              Welcome back, Samuel! 👋
+              Welcome back, {firstName}! 👋
             </h1>
             <p className="text-sm text-gray-500 mt-1">Here's what's happening today.</p>
           </div>
@@ -95,8 +129,8 @@ const MemberDashboard = () => {
             </div>
             <div>
                <p className="text-sm text-gray-500 font-medium">Last Check-In</p>
-               <h3 className="text-lg font-bold text-gray-900 mt-1">-</h3>
-               <p className="text-xs text-gray-400 mt-0.5">No recent check-ins</p>
+               <h3 className="text-lg font-bold text-gray-900 mt-1">{lastCheckIn ? lastCheckIn.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '-'}</h3>
+               <p className="text-xs text-gray-400 mt-0.5">{lastCheckIn ? lastCheckIn.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'No recent check-ins'}</p>
             </div>
           </div>
   
@@ -106,14 +140,23 @@ const MemberDashboard = () => {
                 <div className="p-3 bg-pink-50 text-pink-600 rounded-xl">
                   <CalendarCheck size={24} />
                 </div>
-                <button className="text-gray-400 hover:text-gray-600">
+                <Link to="/member/booking" className="text-gray-400 hover:text-gray-600">
                   <ChevronRight size={20} />
-                </button>
+                </Link>
              </div>
              <div>
                <p className="text-sm text-gray-500 font-medium">Next Booking</p>
-               <h3 className="text-lg font-bold text-gray-900 mt-1">-</h3>
-               <p className="text-xs text-gray-400 mt-0.5">No upcoming classes</p>
+               {nextBooking ? (
+                 <>
+                   <h3 className="text-lg font-bold text-gray-900 mt-1">{nextBooking.trainerName}</h3>
+                   <p className="text-xs text-gray-400 mt-0.5">{nextBooking.date} · {nextBooking.time}</p>
+                 </>
+               ) : (
+                 <>
+                   <h3 className="text-lg font-bold text-gray-900 mt-1">-</h3>
+                   <p className="text-xs text-gray-400 mt-0.5">No upcoming bookings</p>
+                 </>
+               )}
              </div>
           </div>
         </div>
@@ -165,7 +208,7 @@ const MemberDashboard = () => {
             
             <div className="flex-1 w-full min-h-[200px]">
                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <BarChart data={weeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                      <XAxis 
                         dataKey="name" 
@@ -185,7 +228,7 @@ const MemberDashboard = () => {
                         cursor={{ fill: '#f9fafb' }}
                      />
                      <Bar dataKey="visits" radius={[4, 4, 0, 0]} barSize={32}>
-                        {data.map((entry, index) => (
+                        {weeklyData.map((entry, index) => (
                            <Cell key={`cell-${index}`} fill={entry.visits > 0 ? '#10b981' : '#e5e7eb'} />
                         ))}
                      </Bar>

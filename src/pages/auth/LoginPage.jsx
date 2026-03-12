@@ -4,6 +4,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { loginUser } from '../../services/authService';
+import { getUserDoc } from '../../services/userService';
 import logo from '../../assets/logo.png';
 
 const loginSchema = z.object({
@@ -30,21 +32,24 @@ const LoginPage = () => {
 
   const onSubmit = async (data) => {
     try {
-      // Mock API call
-      console.log('Login Data:', data);
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate delay
-      
+      const cred = await loginUser(data.email, data.password);
+      const profile = await getUserDoc(cred.user.uid);
+
       toast.success('Logged in successfully!');
-      
-      // Mock redirection logic based on email text
-      if (data.email.toLowerCase().includes('trainer')) {
+
+      if (profile?.role === 'trainer') {
         navigate('/trainer/dashboard');
+      } else if (profile?.role === 'admin') {
+        navigate('/admin/dashboard');
       } else {
         navigate('/member/dashboard');
       }
     } catch (error) {
-      toast.error('Login failed. Please check your credentials.');
-      console.error(error);
+      const msg =
+        error.code === 'auth/invalid-credential'
+          ? 'Invalid email or password.'
+          : 'Login failed. Please try again.';
+      toast.error(msg);
     }
   };
 

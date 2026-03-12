@@ -10,6 +10,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { recordCheckIn, lookupMember } from '../../services/attendanceService';
 
 const ScannerPage = () => {
   const [scanResult, setScanResult] = useState(null);
@@ -17,54 +18,61 @@ const ScannerPage = () => {
   const [manualId, setManualId] = useState("");
   const [isScanning, setIsScanning] = useState(true);
   const [lastScanned, setLastScanned] = useState(null);
+  const [processing, setProcessing] = useState(false);
 
-  // Mock checking logic
-  const processScan = (data) => {
-    if (!data) return;
+  const processScan = async (data) => {
+    if (!data || processing) return;
     
-    // Prevent rapid duplicate scans
     const now = Date.now();
     if (lastScanned && (now - lastScanned < 3000) && scanResult?.status === 'success') {
        return;
     }
     setLastScanned(now);
+    setProcessing(true);
 
     try {
-      // Attempt to parse JSON (assuming our QR is JSON string)
-      // Or it might be just a raw ID string depending on implementation
       let parsedData;
       try {
-        parsedData = JSON.parse(data.text || data); // react-qr-scanner usually returns object with text
-      } catch (e) {
+        parsedData = JSON.parse(data.text || data);
+      } catch {
         parsedData = { userId: data.text || data };
       }
 
-      console.log("Scanned Data:", parsedData);
+      const uid = parsedData.userId || parsedData.id;
+      if (!uid) throw new Error("Invalid QR Format");
 
-      // Mock Validation
-      if (parsedData.userId || parsedData.id) {
-        setScanResult({
-            status: 'success',
-            member: {
-                name: "Daniel Okon", // Mocked name
-                id: parsedData.userId || parsedData.id,
-                status: "Active",
-                plan: "Premium",
-                photoUrl: null
-            }
-        });
-        toast.success("Access Granted: Daniel Okon");
-      } else {
-        throw new Error("Invalid QR Format");
+      // Validate QR timestamp (reject if older than 90 seconds)
+      if (parsedData.timestamp) {
+        const age = (Date.now() - parsedData.timestamp) / 1000;
+        if (age > 90) throw new Error("QR Code expired");
       }
 
+      // Look up member in Firestore
+      const member = await lookupMember(uid);
+      if (!member) throw new Error("Member not found");
+
+      // Record check-in
+      await recordCheckIn(uid, member.name);
+
+      setScanResult({
+        status: 'success',
+        member: {
+          name: member.name,
+          id: uid.slice(0, 12),
+          status: member.status || "Active",
+          plan: "Member",
+          photoUrl: null,
+        }
+      });
+      toast.success(`Access Granted: ${member.name}`);
     } catch (err) {
-      console.error("Scan Error", err);
       setScanResult({
         status: 'error',
-        message: "Invalid QR Code format"
+        message: err.message || "Invalid QR Code format"
       });
-      toast.error("Invalid QR Code");
+      toast.error(err.message || "Invalid QR Code");
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -82,8 +90,8 @@ const ScannerPage = () => {
     e.preventDefault();
     if (!manualId.trim()) return;
     
-    // Mock manual check
-    processScan({ text: JSON.stringify({ userId: manualId }) });
+    // Use the manual ID directly as userId
+    processScan(JSON.stringify({ userId: manualId.trim() }));
     setManualId("");
   };
 

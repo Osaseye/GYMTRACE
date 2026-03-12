@@ -5,6 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
+import { loginUser } from '../../services/authService';
+import { getUserDoc } from '../../services/userService';
 import logo from '/logo.png';
 
 const loginSchema = z.object({
@@ -29,18 +31,18 @@ const AdminLoginPage = () => {
 
   const onSubmit = async (data) => {
     try {
-      // Mock Admin Login Check
-      // In a real app, this would hit an API endpoint
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate delay
+      const cred = await loginUser(data.email, data.password);
+      const profile = await getUserDoc(cred.user.uid);
 
-      if (data.email === 'admin@gymtrace.com' && data.password === 'admin123') {
-        toast.success('Welcome back, Administrator');
-        navigate('/admin/dashboard');
-      } else {
-        toast.error('Invalid admin credentials');
+      if (profile?.role !== 'admin') {
+        toast.error('Access denied. Admin accounts only.');
+        return;
       }
+
+      toast.success('Welcome back, Administrator');
+      navigate('/admin/dashboard');
     } catch (error) {
-      toast.error('Login failed. Please try again.');
+      toast.error('Invalid admin credentials');
     }
   };
 

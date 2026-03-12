@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import ProtectedRoute from './components/shared/ProtectedRoute';
 import LandingPage from './pages/public/LandingPage.jsx';
 import LoginPage from './pages/auth/LoginPage.jsx';
 import RegisterPage from './pages/auth/RegisterPage.jsx';
@@ -40,7 +41,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         
         {/* Member Routes - Protected */}
-        <Route path="/member" element={<MemberLayout />}>
+        <Route path="/member" element={<ProtectedRoute allowedRoles={['member']}><MemberLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="/member/dashboard" replace />} />
           <Route path="dashboard" element={<MemberDashboard />} />
           <Route path="qr" element={<QRCodePage />} />
@@ -52,7 +53,7 @@ function App() {
         </Route>
 
         {/* Trainer Routes - Protected */}
-        <Route path="/trainer" element={<TrainerLayout />}>
+        <Route path="/trainer" element={<ProtectedRoute allowedRoles={['trainer']}><TrainerLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="/trainer/dashboard" replace />} />
           <Route path="dashboard" element={<TrainerDashboard />} />
           <Route path="schedule" element={<SchedulePage />} />
@@ -62,7 +63,7 @@ function App() {
 
         {/* Admin Routes - Protected */}
         <Route path="/admin/login" element={<AdminLoginPage />} />
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="scanner" element={<ScannerPage />} />

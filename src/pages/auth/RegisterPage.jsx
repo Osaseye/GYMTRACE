@@ -5,6 +5,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { registerUser } from '../../services/authService';
+import { createUserDoc } from '../../services/userService';
 import logo from '../../assets/logo.png';
 
 const registerSchema = z.object({
@@ -46,21 +48,26 @@ const RegisterPage = () => {
 
   const onSubmit = async (data) => {
     try {
-      // Mock API call
-      console.log('Register Data:', data);
-      await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate delay
-      
+      const cred = await registerUser(data.email, data.password);
+      await createUserDoc(cred.user.uid, {
+        name: data.fullName,
+        email: data.email,
+        role: data.role,
+      });
+
       toast.success('Account created successfully!');
-      
-      // Mock logic: navigate based on role
+
       if (data.role === 'trainer') {
         navigate('/trainer/dashboard');
       } else {
         navigate('/member/dashboard');
       }
     } catch (error) {
-        toast.error('Registration failed. Please try again.');
-        console.error(error);
+      const msg =
+        error.code === 'auth/email-already-in-use'
+          ? 'This email is already registered.'
+          : 'Registration failed. Please try again.';
+      toast.error(msg);
     }
   };
 

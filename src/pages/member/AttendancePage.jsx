@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Calendar, 
   Clock, 
@@ -10,10 +10,45 @@ import {
   ArrowUpDown,
   History
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { getAttendanceByMember } from '../../services/attendanceService';
 
 const AttendancePage = () => {
-  // Mock Data
-  const [attendanceHistory] = useState([]);
+  const { user } = useAuth();
+  const [attendanceHistory, setAttendanceHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetch = async () => {
+      try {
+        const records = await getAttendanceByMember(user.uid);
+        setAttendanceHistory(records);
+      } catch {
+        // silent
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetch();
+  }, [user]);
+
+  const totalVisits = attendanceHistory.length;
+  const thisMonth = attendanceHistory.filter((r) => {
+    const d = r.checkIn?.toDate?.();
+    if (!d) return false;
+    const now = new Date();
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+
+  const formatTime = (ts) => {
+    if (!ts?.toDate) return '—';
+    return ts.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
+  const formatDate = (ts) => {
+    if (!ts?.toDate) return '—';
+    return ts.toDate().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -55,19 +90,7 @@ const AttendancePage = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Total Visits</p>
-              <h3 className="text-2xl font-bold text-gray-900">0</h3>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-              <Timer size={24} />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Avg. Duration</p>
-              <h3 className="text-2xl font-bold text-gray-900">0m</h3>
+              <h3 className="text-2xl font-bold text-gray-900">{totalVisits}</h3>
             </div>
           </div>
         </div>
@@ -79,7 +102,19 @@ const AttendancePage = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">This Month</p>
-              <h3 className="text-2xl font-bold text-gray-900">0</h3>
+              <h3 className="text-2xl font-bold text-gray-900">{thisMonth}</h3>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+              <Timer size={24} />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500">Avg. Duration</p>
+              <h3 className="text-2xl font-bold text-gray-900">—</h3>
             </div>
           </div>
         </div>
@@ -134,25 +169,25 @@ const AttendancePage = () => {
                         <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500">
                           <Calendar size={16} />
                         </div>
-                        <span className="text-sm font-medium text-gray-900">{record.date}</span>
+                        <span className="text-sm font-medium text-gray-900">{formatDate(record.checkIn)}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
-                        <span className="text-sm text-gray-900 font-medium">{record.checkIn}</span>
-                        <span className="text-xs text-gray-500">to {record.checkOut}</span>
+                        <span className="text-sm text-gray-900 font-medium">{formatTime(record.checkIn)}</span>
+                        <span className="text-xs text-gray-500">to {record.checkOut ? formatTime(record.checkOut) : '—'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Clock size={16} className="text-gray-400" />
-                        {record.duration}
+                        —
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <MapPin size={16} className="text-gray-400" />
-                        {record.location}
+                        Main Gym
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -182,7 +217,7 @@ const AttendancePage = () => {
         
         {/* Pagination */}
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
-          <p className="text-sm text-gray-500">Showing <span className="font-medium">0</span> to <span className="font-medium">0</span> of <span className="font-medium">0</span> results</p>
+          <p className="text-sm text-gray-500">Showing <span className="font-medium">{attendanceHistory.length}</span> results</p>
           <div className="flex gap-2">
             <button className="px-3 py-1 text-sm border border-gray-200 rounded bg-white text-gray-600 disabled:opacity-50" disabled>Previous</button>
             <button className="px-3 py-1 text-sm border border-gray-200 rounded bg-white text-gray-600 hover:bg-gray-50" disabled>Next</button>

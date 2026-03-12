@@ -1,17 +1,47 @@
 import React, { useState } from 'react';
 import { User, Mail, Phone, Shield, Camera, Bell, Moon, ChevronRight, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { useAuth } from '../../context/AuthContext';
+import { updateUserDoc } from '../../services/userService';
+import { logoutUser } from '../../services/authService';
 
 const ProfilePage = () => {
+  const navigate = useNavigate();
+  const { userData, refreshUserData } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: 'Samuel Doe',
-    email: 'samuel.doe@babcock.edu.ng',
-    phone: '+234 812 345 6789',
+    name: userData?.name || '',
+    email: userData?.email || '',
+    phone: userData?.phone || '',
   });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const handleSave = async () => {
+    try {
+      await updateUserDoc(userData.uid, {
+        name: formData.name,
+        phone: formData.phone,
+      });
+      await refreshUserData();
+      setIsEditing(false);
+      toast.success('Profile updated!');
+    } catch {
+      toast.error('Failed to save changes.');
+    }
+  };
+
+  const handleSignOut = async () => {
+    await logoutUser();
+    navigate('/login');
+  };
+
+  const initials = userData?.name
+    ? userData.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+    : '??';
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6 animate-fade-in-up">
@@ -21,7 +51,7 @@ const ProfilePage = () => {
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-6">
         <div className="relative">
           <div className="w-24 h-24 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-3xl border-4 border-white shadow-md">
-            SD
+            {initials}
           </div>
           <button className="absolute bottom-0 right-0 bg-gray-900 text-white p-2 rounded-full hover:bg-gray-800 transition-colors">
             <Camera size={16} />
@@ -29,7 +59,9 @@ const ProfilePage = () => {
         </div>
         <div className="text-center md:text-left flex-1">
           <h2 className="text-xl font-bold text-gray-900">{formData.name}</h2>
-          <p className="text-gray-500 text-sm">Member since Sept 2023</p>
+          <p className="text-gray-500 text-sm">
+            Member since {userData?.createdAt?.toDate ? userData.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '—'}
+          </p>
           <div className="mt-3 inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-100">
             <Shield size={12} className="mr-1.5" />
             Premium Plan
@@ -97,7 +129,7 @@ const ProfilePage = () => {
               </div>
               {isEditing && (
                 <div className="pt-2 flex justify-end">
-                  <button className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 shadow-md shadow-emerald-200 transition-all">
+                  <button onClick={handleSave} className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 shadow-md shadow-emerald-200 transition-all">
                     Save Changes
                   </button>
                 </div>
@@ -151,7 +183,7 @@ const ProfilePage = () => {
                 </div>
               </div>
               <div className=" pt-2 border-t border-gray-100">
-                <button className="w-full flex items-center justify-between p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-semibold">
+                <button onClick={handleSignOut} className="w-full flex items-center justify-between p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-semibold">
                    <span>Sign Out</span>
                    <LogOut size={16} />
                 </button>
