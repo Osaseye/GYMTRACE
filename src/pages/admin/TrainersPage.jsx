@@ -16,7 +16,7 @@ const TrainersPage = () => {
       setLoading(true);
       const data = await getAllTrainers();
       setTrainers(data);
-    } catch {
+    } catch (error) { console.error(error);
       toast.error('Failed to load trainers');
     } finally {
       setLoading(false);
@@ -54,7 +54,7 @@ const TrainersPage = () => {
       toast.success('Trainer updated');
       setEditModal(null);
       await fetchTrainers();
-    } catch {
+    } catch (error) { console.error(error);
       toast.error('Failed to update trainer');
     } finally {
       setSaving(false);
@@ -69,7 +69,7 @@ const TrainersPage = () => {
       toast.success('Trainer removed');
       setDeleteModal(null);
       await fetchTrainers();
-    } catch {
+    } catch (error) { console.error(error);
       toast.error('Failed to delete trainer');
     } finally {
       setSaving(false);

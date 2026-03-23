@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Filter, CheckCircle2, XCircle, Clock, Calendar, MoreVertical, Dumbbell, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
-import { getSessionsByTrainer, completeSession, cancelSession } from '../../services/sessionService';
+import { getTrainerBookings, updateBookingStatus } from '../../services/bookingService';
 
 const SessionsPage = () => {
   const { user } = useAuth();
@@ -16,9 +16,9 @@ const SessionsPage = () => {
     if (!user) return;
     try {
       setLoading(true);
-      const data = await getSessionsByTrainer(user.uid);
+      const data = await getTrainerBookings(user.uid);
       setSessions(data);
-    } catch {
+    } catch (error) { console.error(error);
       toast.error('Failed to load sessions');
     } finally {
       setLoading(false);
@@ -31,26 +31,26 @@ const SessionsPage = () => {
     const matchesTab = s.status === activeTab;
     const matchesSearch = searchQuery === '' ||
       (s.memberName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (s.type || '').toLowerCase().includes(searchQuery.toLowerCase());
+      (s.sessionType || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesTab && matchesSearch;
   });
 
   const handleComplete = async (id) => {
     try {
-      await completeSession(id);
+      await updateBookingStatus(id, 'completed');
       toast.success('Session marked as completed');
       await fetchSessions();
-    } catch {
+    } catch (error) { console.error(error);
       toast.error('Failed to update session');
     }
   };
 
   const handleCancel = async (id) => {
     try {
-      await cancelSession(id);
+      await updateBookingStatus(id, 'cancelled');
       toast.success('Session cancelled');
       await fetchSessions();
-    } catch {
+    } catch (error) { console.error(error);
       toast.error('Failed to cancel session');
     }
   };
@@ -157,7 +157,7 @@ const SessionsPage = () => {
                     <td className="py-4 px-6">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100/80 text-gray-600 text-xs font-medium">
                         <Dumbbell size={12} />
-                        {session.type || 'Training'}
+                        {session.sessionType || 'Training'}
                       </span>
                     </td>
                     <td className="py-4 px-6">

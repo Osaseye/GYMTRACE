@@ -103,3 +103,53 @@ export const getTrainerClients = async (trainerId) => {
 
   return Array.from(clientMap.values());
 };
+
+/**
+ * Update the status of a booking.
+ */
+export const updateBookingStatus = async (bookingId, status) => {
+  const ref = doc(db, "bookings", bookingId);
+  await updateDoc(ref, { status });
+};
+
+/**
+ * Fetch all bookings for a trainer.
+ */
+export const getTrainerBookings = async (trainerId) => {
+  const q = query(
+    bookingsRef,
+    where("trainerId", "==", trainerId),
+    orderBy("createdAt", "desc")
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+};
+
+/**
+ * Fetch bookings for a trainer on today's date.
+ */
+export const getTodayTrainerBookings = async (trainerId) => {
+  // Use local ISO format for today's date
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  const q = query(
+    bookingsRef,
+    where("trainerId", "==", trainerId),
+    where("date", "==", todayStr)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+};
+
+/**
+ * Fetch bookings for a trainer within a specific date range.
+ */
+export const getWeekTrainerBookings = async (trainerId, startDateStr, endDateStr) => {
+  const q = query(
+    bookingsRef,
+    where("trainerId", "==", trainerId),
+    where("date", ">=", startDateStr),
+    where("date", "<=", endDateStr)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+};

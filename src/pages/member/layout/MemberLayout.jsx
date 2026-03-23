@@ -57,7 +57,7 @@ const MemberLayout = () => {
 
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          <p className="px-3 text-xs font-semibold text-gr  ay-400 uppercase tracking-wider mb-3">Menu</p>
+          <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Menu</p>
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;

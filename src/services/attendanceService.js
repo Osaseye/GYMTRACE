@@ -7,6 +7,8 @@ import {
   getDocs,
   serverTimestamp,
   Timestamp,
+  doc,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
@@ -24,6 +26,17 @@ export const recordCheckIn = async (memberId, memberName) => {
     status: "Active",
   });
   return docRef.id;
+};
+
+/**
+ * Record a check-out for a specific attendance record.
+ */
+export const recordCheckOut = async (attendanceId) => {
+  const docRef = doc(db, "attendance", attendanceId);
+  await updateDoc(docRef, {
+    checkOut: serverTimestamp(),
+    status: "Completed",
+  });
 };
 
 /**

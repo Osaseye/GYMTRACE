@@ -52,10 +52,10 @@ const MemberDashboard = () => {
           // Find the nearest upcoming booking
           const todayStr = new Date().toISOString().slice(0, 10);
           const upcoming = bookings
-            .filter((b) => b.status === 'confirmed' && b.date >= todayStr)
+            .filter((b) => b.status === 'upcoming' && b.date >= todayStr)
             .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
           if (upcoming.length > 0) setNextBooking(upcoming[0]);
-        } catch {
+        } catch (error) { console.error(error);
           // silent
         }
       };

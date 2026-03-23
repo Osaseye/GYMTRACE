@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
 import { loginUser } from '../../services/authService';
 import { getUserDoc } from '../../services/userService';
-import logo from '/logo.png';
+import logo from '../../assets/logo.png';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),

@@ -4,7 +4,6 @@ import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { getAllTrainers } from '../../services/trainerService';
 import { createBooking } from '../../services/bookingService';
-import { createSession } from '../../services/sessionService';
 
 const specialties = ['All', 'Bodybuilding', 'Cardio', 'Yoga', 'CrossFit', 'Rehabilitation', 'Powerlifting', 'Nutrition'];
 
@@ -24,7 +23,7 @@ const BookingPage = () => {
       try {
         const data = await getAllTrainers();
         setTrainers(data.filter((t) => t.status === 'active'));
-      } catch {
+      } catch (error) { console.error(error);
         toast.error('Failed to load trainers');
       } finally {
         setLoading(false);
@@ -55,15 +54,12 @@ const BookingPage = () => {
         date: bookingDate,
         time: bookingTime,
       };
-      await Promise.all([
-        createBooking({ ...shared, sessionType: 'Personal Training' }),
-        createSession({ ...shared, duration: '1h', type: 'Personal Training' }),
-      ]);
+      await createBooking({ ...shared, sessionType: 'Personal Training' });
       toast.success(`Session booked with ${bookingModal.name}!`);
       setBookingModal(null);
       setBookingDate('');
       setBookingTime('');
-    } catch {
+    } catch (error) { console.error(error);
       toast.error('Failed to book session');
     } finally {
       setSubmitting(false);

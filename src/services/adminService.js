@@ -11,21 +11,24 @@ import { db } from "../lib/firebase";
 
 const usersRef = collection(db, "users");
 const attendanceRef = collection(db, "attendance");
+const bookingsRef = collection(db, "bookings");
 
 /**
  * Get counts for the admin dashboard stats cards.
  */
 export const getAdminStats = async () => {
-  const [membersSnap, trainersSnap, todayCheckIns] = await Promise.all([
+  const [membersSnap, trainersSnap, todayCheckIns, bookingsSnap] = await Promise.all([
     getDocs(query(usersRef, where("role", "==", "member"))),
     getDocs(query(usersRef, where("role", "==", "trainer"))),
     getTodayCheckIns(),
+    getDocs(bookingsRef),
   ]);
 
   return {
     totalMembers: membersSnap.size,
     totalTrainers: trainersSnap.size,
     todayCheckIns,
+    totalBookings: bookingsSnap.size,
   };
 };
 

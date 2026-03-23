@@ -1,0 +1,70 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- Helper Functions ---
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isTrainer() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'trainer';
+    }
+
+    // --- Collection Rules ---
+
+    // 1. Users can read/write their own profile. Authenticated users can read others (needed for trainers/clients).
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // 2. Attendance - Users can check themselves in/out. Admins can do anything.
+    match /attendance/{docId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.memberId == request.auth.uid;
+      allow update: if isAuthenticated() && (resource.data.memberId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // 3. Bookings - Members book their own. Trainers and Admins can update/cancel.
+    match /bookings/{docId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.memberId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && (
+        resource.data.memberId == request.auth.uid || 
+        resource.data.trainerId == request.auth.uid || 
+        isAdmin()
+      );
+    }
+
+    // 4. Workouts - Members manage their own logs, Trainers/Admins can view/manage.
+    match /workouts/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (
+        resource.data.memberId == request.auth.uid || 
+        isTrainer() || 
+        isAdmin()
+      );
+    }
+
+    // 5. Sessions - Manageable by Trainers and Admins
+    match /sessions/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (isTrainer() || isAdmin());
+    }
+
+    // 6. Settings - Admins can read and write. Members can read.
+    match /settings/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+  }
+}

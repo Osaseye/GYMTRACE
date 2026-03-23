@@ -16,7 +16,8 @@ const MembersPage = () => {
       setLoading(true);
       const data = await getAllMembers();
       setMembers(data);
-    } catch {
+    } catch (error) {
+      console.error(error);
       toast.error('Failed to load members');
     } finally {
       setLoading(false);
@@ -54,7 +55,8 @@ const MembersPage = () => {
       toast.success('Member updated');
       setEditModal(null);
       await fetchMembers();
-    } catch {
+    } catch (error) {
+      console.error(error);
       toast.error('Failed to update member');
     } finally {
       setSaving(false);
@@ -69,7 +71,8 @@ const MembersPage = () => {
       toast.success('Member removed');
       setDeleteModal(null);
       await fetchMembers();
-    } catch {
+    } catch (error) {
+      console.error(error);
       toast.error('Failed to delete member');
     } finally {
       setSaving(false);

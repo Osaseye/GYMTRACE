@@ -11,27 +11,37 @@ import {
   History
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { getAttendanceByMember } from '../../services/attendanceService';
+import { getAttendanceByMember, recordCheckOut } from '../../services/attendanceService';
 
 const AttendancePage = () => {
   const { user } = useAuth();
   const [attendanceHistory, setAttendanceHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const fetch = async () => {
+    try {
+      const records = await getAttendanceByMember(user.uid);
+      setAttendanceHistory(records);
+    } catch (error) { console.error(error);
+      // silent
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
-    const fetch = async () => {
-      try {
-        const records = await getAttendanceByMember(user.uid);
-        setAttendanceHistory(records);
-      } catch {
-        // silent
-      } finally {
-        setLoading(false);
-      }
-    };
     fetch();
   }, [user]);
+
+  const handleCheckOut = async (id) => {
+    try {
+      await recordCheckOut(id);
+      await fetch();
+    } catch (err) {
+      console.error("Failed to check out", err);
+    }
+  };
 
   const totalVisits = attendanceHistory.length;
   const thisMonth = attendanceHistory.filter((r) => {
@@ -158,6 +168,9 @@ const AttendancePage = () => {
                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -196,11 +209,21 @@ const AttendancePage = () => {
                         {record.status}
                       </span>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      {record.status === 'Active' && (
+                        <button
+                          onClick={() => handleCheckOut(record.id)}
+                          className="px-3 py-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-md transition-colors text-sm font-medium"
+                        >
+                          Check Out
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="px-6 py-12 text-center">
+                  <td colSpan="6" className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center justify-center text-gray-400">
                       <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                         <History size={32} />

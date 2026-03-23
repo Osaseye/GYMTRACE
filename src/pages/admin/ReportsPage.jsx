@@ -6,7 +6,7 @@ import { getAdminStats, getMonthlyGrowth, getWeeklyCheckIns } from '../../servic
 const ReportsPage = () => {
   const [activeTab, setActiveTab] = useState('attendance');
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ totalMembers: 0, totalTrainers: 0, todayCheckIns: 0 });
+  const [stats, setStats] = useState({ totalMembers: 0, totalTrainers: 0, todayCheckIns: 0, totalBookings: 0 });
   const [growthData, setGrowthData] = useState([]);
   const [weeklyData, setWeeklyData] = useState([]);
 
@@ -21,7 +21,7 @@ const ReportsPage = () => {
         setStats(s);
         setGrowthData(growth);
         setWeeklyData(weekly);
-      } catch {
+      } catch (error) { console.error(error);
         // silent
       } finally {
         setLoading(false);
@@ -33,7 +33,7 @@ const ReportsPage = () => {
   const tabs = [
     { id: 'attendance', label: 'Attendance', icon: Calendar },
     { id: 'growth', label: 'User Growth', icon: TrendingUp },
-    { id: 'financial', label: 'Financial', icon: DollarSign },
+    { id: 'bookings', label: 'Bookings', icon: Calendar },
   ];
 
   const chartData = activeTab === 'attendance' ? weeklyData : activeTab === 'growth' ? growthData : [];
@@ -77,7 +77,7 @@ const ReportsPage = () => {
           <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm min-h-[400px]">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-semibold text-gray-900">
-                {activeTab === 'financial' && 'Revenue Overview'}
+                {activeTab === 'bookings' && 'Bookings Overview'}
                 {activeTab === 'attendance' && 'Daily Attendance (Last 7 Days)'}
                 {activeTab === 'growth' && 'New Registrations (Last 6 Months)'}
               </h3>
@@ -88,9 +88,9 @@ const ReportsPage = () => {
                 <div className="h-full flex items-center justify-center">
                   <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
                 </div>
-              ) : activeTab === 'financial' ? (
+              ) : activeTab === 'bookings' ? (
                 <div className="h-full flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
-                  Revenue tracking is mocked — no real payment data
+                  Booking charts coming soon
                 </div>
               ) : chartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -117,7 +117,7 @@ const ReportsPage = () => {
           <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <span className="text-gray-500 text-sm">
-                {activeTab === 'financial' ? 'Total Earnings' : activeTab === 'attendance' ? 'Week Visits' : 'Total Members'}
+                {activeTab === 'bookings' ? 'Total Bookings' : activeTab === 'attendance' ? 'Week Visits' : 'Total Members'}
               </span>
               <span className="p-2 bg-green-50 text-green-600 rounded-lg">
                 <ArrowUpRight size={20} />
@@ -126,8 +126,8 @@ const ReportsPage = () => {
             <div className="text-3xl font-bold text-gray-900 mb-1">
               {loading ? (
                 <Loader2 className="w-6 h-6 animate-spin text-gray-300" />
-              ) : activeTab === 'financial' ? (
-                '₦0'
+              ) : activeTab === 'bookings' ? (
+                stats.totalBookings || 0
               ) : activeTab === 'attendance' ? (
                 totalAttendance
               ) : (
@@ -136,7 +136,7 @@ const ReportsPage = () => {
             </div>
             <div className="text-sm text-gray-400 flex items-center gap-1">
               <TrendingUp size={16} />
-              <span>{activeTab === 'attendance' ? 'Last 7 days' : activeTab === 'growth' ? 'All time' : 'Mocked'}</span>
+              <span>{activeTab === 'attendance' ? 'Last 7 days' : activeTab === 'growth' ? 'All time' : 'All time'}</span>
             </div>
           </div>
 

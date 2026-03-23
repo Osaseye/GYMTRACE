@@ -76,7 +76,7 @@ const WorkoutsPage = () => {
         };
       });
       setWeeklySchedule(schedule);
-    } catch {
+    } catch (error) { console.error(error);
       toast.error('Failed to load workouts');
     } finally {
       setLoading(false);
@@ -123,7 +123,7 @@ const WorkoutsPage = () => {
       setShowModal(false);
       setForm({ title: '', duration: '', calories: '', difficulty: 'Intermediate', exercises: [{ name: '', sets: '', reps: '', weight: '' }] });
       await fetchData();
-    } catch {
+    } catch (error) { console.error(error);
       toast.error('Failed to log workout');
     }
   };
@@ -133,7 +133,7 @@ const WorkoutsPage = () => {
       await deleteWorkout(id);
       toast.success('Workout removed');
       await fetchData();
-    } catch {
+    } catch (error) { console.error(error);
       toast.error('Failed to delete');
     }
   };

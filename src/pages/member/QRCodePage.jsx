@@ -18,6 +18,7 @@ const QRCodePage = () => {
   const [qrValue, setQrValue] = useState("");
 
   const generateQRCallback = () => {
+    if (!user?.uid) return;
     const secureData = JSON.stringify({
       userId: user?.uid,
       timestamp: Date.now(),
@@ -29,22 +30,20 @@ const QRCodePage = () => {
 
   // Initial generation
   useEffect(() => {
-    generateQRCallback();
-  }, []);
+    if (user?.uid) generateQRCallback();
+  }, [user]);
 
   // Timer countdown
   useEffect(() => {
-    if (timeLeft <= 0) {
-      generateQRCallback();
-      return;
-    }
-    
     const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
+      setTimeLeft((prev) => {
+        if (prev <= 1) { generateQRCallback(); return 60; }
+        return prev - 1;
+      });
     }, 1000);
     
     return () => clearInterval(timer);
-  }, [timeLeft]);
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-8">

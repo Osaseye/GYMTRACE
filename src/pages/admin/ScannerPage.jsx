@@ -10,7 +10,8 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { recordCheckIn, lookupMember } from '../../services/attendanceService';
+import { recordCheckIn } from '../../services/attendanceService';
+import { getMemberById } from '../../services/memberService';
 
 const ScannerPage = () => {
   const [scanResult, setScanResult] = useState(null);
@@ -34,7 +35,7 @@ const ScannerPage = () => {
       let parsedData;
       try {
         parsedData = JSON.parse(data.text || data);
-      } catch {
+      } catch (error) { console.error(error);
         parsedData = { userId: data.text || data };
       }
 
@@ -48,7 +49,7 @@ const ScannerPage = () => {
       }
 
       // Look up member in Firestore
-      const member = await lookupMember(uid);
+      const member = await getMemberById(uid);
       if (!member) throw new Error("Member not found");
 
       // Record check-in
@@ -60,8 +61,8 @@ const ScannerPage = () => {
           name: member.name,
           id: uid.slice(0, 12),
           status: member.status || "Active",
-          plan: "Member",
-          photoUrl: null,
+          plan: member.plan || "Basic",
+          photoUrl: member.photoUrl || null,
         }
       });
       toast.success(`Access Granted: ${member.name}`);

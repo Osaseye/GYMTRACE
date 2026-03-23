@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Calendar, Star, Clock, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { getTrainerClients } from '../../services/bookingService';
-import { getTodaySessions, getSessionsByTrainer } from '../../services/sessionService';
+import { getTrainerClients, getTodayTrainerBookings, getTrainerBookings } from '../../services/bookingService';
 
 const TrainerDashboard = () => {
     const { user, userData } = useAuth();
@@ -20,15 +19,15 @@ const TrainerDashboard = () => {
                 setLoading(true);
                 const [clients, today, allSessions] = await Promise.all([
                     getTrainerClients(user.uid),
-                    getTodaySessions(user.uid),
-                    getSessionsByTrainer(user.uid),
+                    getTodayTrainerBookings(user.uid),
+                    getTrainerBookings(user.uid),
                 ]);
                 setClientCount(clients.length);
                 setTodayCount(today.length);
                 setUpcomingSessions(
                     allSessions.filter((s) => s.status === 'upcoming').slice(0, 5)
                 );
-            } catch {
+            } catch (error) { console.error(error);
                 // silent
             } finally {
                 setLoading(false);
@@ -126,7 +125,7 @@ const TrainerDashboard = () => {
                                                 <span className="font-medium text-gray-700 text-sm">{s.memberName || '—'}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600">{s.type || 'Training'}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">{s.sessionType || 'Training'}</td>
                                         <td className="px-6 py-4 text-sm text-gray-600">{formatDate(s.date)} · {s.time}</td>
                                         <td className="px-6 py-4">
                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">

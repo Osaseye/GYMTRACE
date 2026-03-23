@@ -3,6 +3,7 @@ import {
   query,
   where,
   orderBy,
+  getDoc,
   getDocs,
   doc,
   updateDoc,
@@ -11,6 +12,16 @@ import {
 import { db } from "../lib/firebase";
 
 const usersRef = collection(db, "users");
+
+/**
+ * Fetch a member by their ID.
+ */
+export const getMemberById = async (uid) => {
+  const userRef = doc(db, "users", uid);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return null;
+  return { uid, ...snap.data() };
+};
 
 /**
  * Fetch all users whose role === 'member'.
@@ -36,4 +47,9 @@ export const updateMember = async (uid, fields) => {
 export const deleteMember = async (uid) => {
   const userRef = doc(db, "users", uid);
   await deleteDoc(userRef);
+
+  // TODO: BUG-09 - Delete Firebase Auth account
+  console.warn("Need Admin SDK or Cloud Function to actually delete Firebase Auth account.");
+  // Mock Cloud Function call:
+  // await fetch('/api/delete-user', { method: 'POST', body: JSON.stringify({ uid }) });
 };

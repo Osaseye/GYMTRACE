@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Clock, User, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { getSessionsForWeek } from '../../services/sessionService';
+import { getWeekTrainerBookings } from '../../services/bookingService';
 
 const SchedulePage = () => {
   const { user } = useAuth();
@@ -47,9 +47,9 @@ const SchedulePage = () => {
       try {
         const startStr = weekStart.toISOString().slice(0, 10);
         const endStr = weekEnd.toISOString().slice(0, 10);
-        const data = await getSessionsForWeek(user.uid, startStr, endStr);
+        const data = await getWeekTrainerBookings(user.uid, startStr, endStr);
         setEvents(data);
-      } catch {
+      } catch (error) { console.error(error);
         // silent
       } finally {
         setLoading(false);
@@ -137,7 +137,7 @@ const SchedulePage = () => {
                         <div key={`${day.full}-${time}`} className="border-r border-gray-100 last:border-r-0 p-1 relative group">
                           {event ? (
                             <div className={`absolute inset-1 rounded-lg p-2 text-xs border cursor-pointer hover:shadow-md transition-all z-10 ${colorMap[event.status] || colorMap.upcoming}`}>
-                              <div className="font-bold truncate">{event.type}</div>
+                              <div className="font-bold truncate">{event.sessionType || 'Training'}</div>
                               <div className="flex items-center gap-1 mt-1 opacity-90 truncate">
                                 <User size={10} />
                                 <span>{event.memberName}</span>

@@ -18,7 +18,7 @@ const ClientsPage = () => {
         setLoading(true);
         const data = await getTrainerClients(user.uid);
         setClients(data);
-      } catch {
+      } catch (error) { console.error(error);
         toast.error('Failed to load clients');
       } finally {
         setLoading(false);
@@ -29,13 +29,12 @@ const ClientsPage = () => {
 
   const filteredClients = clients.filter((c) =>
     searchTerm === '' ||
-    (c.memberName || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (c.name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '—';
-    const d = new Date(dateStr + 'T00:00:00');
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const formatDate = (date) => {
+    if (!date) return '—';
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   return (
@@ -67,13 +66,13 @@ const ClientsPage = () => {
       ) : filteredClients.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredClients.map((client) => (
-            <div key={client.memberId} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div key={client.uid} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex gap-4 mb-4">
                 <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-lg border-2 border-emerald-100">
-                  {(client.memberName || '?').charAt(0).toUpperCase()}
+                  {(client.name || '?').charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900">{client.memberName}</h3>
+                  <h3 className="font-bold text-gray-900">{client.name}</h3>
                   <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">
                     {client.totalSessions} session{client.totalSessions !== 1 ? 's' : ''}
                   </span>
@@ -98,7 +97,7 @@ const ClientsPage = () => {
                     <Calendar size={14} />
                     Last Booking
                   </span>
-                  <span className="font-medium text-gray-900">{formatDate(client.lastBookingDate)}</span>
+                  <span className="font-medium text-gray-900">{formatDate(client.lastBooking)}</span>
                 </div>
               </div>
             </div>

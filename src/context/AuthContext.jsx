@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
         try {
           const profile = await getUserDoc(firebaseUser.uid);
           setUserData(profile);
-        } catch {
+        } catch (error) { console.error(error);
           setUserData(null);
         }
       } else {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Twitter, Instagram, Linkedin, Facebook } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import logo from '../../../assets/logo.png';
 
 const Footer = () => {
   return (
@@ -9,7 +10,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div className="col-span-1 md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <img src="/logo.png" alt="GYMTRACE" className="h-8 w-auto grayscale brightness-200" />
+              <img src={logo} alt="GYMTRACE" className="h-8 w-auto grayscale brightness-200" />
               <span className="font-display font-bold text-xl text-white">GYMTRACE</span>
             </Link>
             <p className="text-sm leading-relaxed">

@@ -12,7 +12,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { getAdminStats, getRecentActivity, getMonthlyGrowth, getWeeklyCheckIns } from '../../services/adminService';
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState({ totalMembers: 0, totalTrainers: 0, todayCheckIns: 0 });
+  const [stats, setStats] = useState({ totalMembers: 0, totalTrainers: 0, todayCheckIns: 0, totalBookings: 0 });
   const [recentActivity, setRecentActivity] = useState([]);
   const [growthData, setGrowthData] = useState([]);
   const [weeklyData, setWeeklyData] = useState([]);
@@ -31,7 +31,8 @@ const AdminDashboard = () => {
         setRecentActivity(activity);
         setGrowthData(growth);
         setWeeklyData(weekly);
-      } catch {
+      } catch (error) {
+        console.error(error);
         // silent
       } finally {
         setLoading(false);
@@ -42,10 +43,10 @@ const AdminDashboard = () => {
 
   const statCards = [
     {
-      title: 'Total Revenue',
-      value: '₦0',
-      change: 'Mocked',
-      icon: DollarSign,
+      title: 'Total Bookings',
+      value: stats.totalBookings?.toString() || '0',
+      change: 'All time',
+      icon: Activity,
       color: 'bg-green-500',
     },
     {

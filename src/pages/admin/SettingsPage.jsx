@@ -30,7 +30,7 @@ const SettingsPage = () => {
           });
           setMaintenanceMode(data.maintenanceMode || false);
         }
-      } catch {
+      } catch (error) { console.error(error);
         toast.error('Failed to load settings');
       } finally {
         setLoading(false);
@@ -55,7 +55,7 @@ const SettingsPage = () => {
         maintenanceMode,
       });
       toast.success('Settings saved successfully!');
-    } catch {
+    } catch (error) { console.error(error);
       toast.error('Failed to save settings');
     } finally {
       setSaving(false);
@@ -68,7 +68,7 @@ const SettingsPage = () => {
     try {
       await saveSettings({ maintenanceMode: next });
       toast.info(`Maintenance mode ${next ? 'enabled' : 'disabled'}`);
-    } catch {
+    } catch (error) { console.error(error);
       setMaintenanceMode(!next);
       toast.error('Failed to update maintenance mode');
     }
