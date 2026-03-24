@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { QRCodeCanvas as QRCode } from 'qrcode.react';
+import { useNavigate } from 'react-router-dom';
 import { 
   RefreshCw, 
   Shield, 
@@ -7,18 +8,22 @@ import {
   Clock,
   Lightbulb,
   CalendarCheck,
-  Headset
+  Headset,
+  Lock
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import logo from '../../assets/logo.png';
 
 const QRCodePage = () => {
   const { user, userData } = useAuth();
+  const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(60);
   const [qrValue, setQrValue] = useState("");
 
+  const isPremium = userData?.isPremium === true;
+
   const generateQRCallback = () => {
-    if (!user?.uid) return;
+    if (!user?.uid || !isPremium) return;
     const secureData = JSON.stringify({
       userId: user?.uid,
       timestamp: Date.now(),
@@ -75,50 +80,70 @@ const QRCodePage = () => {
           </p>
         </div>
 
-        {/* 3. THE QR CODE CARD */}
+        {/* 3. THE QR CODE CARD OR UPSELL */}
         <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-xl w-full max-w-sm flex flex-col items-center relative overflow-hidden">
           
-          <div className="bg-emerald-100 text-emerald-700 text-xs font-bold px-4 py-1.5 rounded-full flex items-center space-x-2 mb-8">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-            <span>VALID ACCESS</span>
-          </div>
-
-          {/* --- QR CODE SECTION --- */}
-          <div className="relative p-4 border-2 border-dashed border-slate-200 rounded-2xl mb-8 bg-white shadow-inner">
-            <div className="bg-white p-2 rounded-xl">
-                {qrValue && (
-                    <QRCode
-                        value={qrValue}
-                        size={200}
-                        className="w-full h-full object-contain"
-                        level="H" 
-                    />
-                )}
+          {!isPremium ? (
+            <div className="flex flex-col items-center text-center py-6">
+              <div className="w-16 h-16 bg-amber-100 rounded-full flex justify-center items-center mb-4">
+                <Lock className="w-8 h-8 text-amber-500" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-800 mb-2">Premium Required</h2>
+              <p className="text-sm text-slate-500 mb-6 px-4">
+                Generating QR codes for club access is a premium feature. Upgrade your account today!
+              </p>
+              <button 
+                onClick={() => navigate('/member/payment')}
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-amber-200"
+              >
+                Upgrade to Premium
+              </button>
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="bg-emerald-100 text-emerald-700 text-xs font-bold px-4 py-1.5 rounded-full flex items-center space-x-2 mb-8">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                <span>VALID ACCESS</span>
+              </div>
 
-          <div className="text-center mb-6 w-full">
-            <div className="flex items-center justify-center gap-2 mb-2">
-                <Clock size={16} className="text-slate-400" />
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Code Expires In</p>
-            </div>
-            <h2 className={`text-4xl font-black font-mono tracking-tighter ${timeLeft <= 10 ? 'text-red-500' : 'text-slate-900'}`}>
-              0:{timeLeft < 10 ? `0${timeLeft}` : timeLeft}
-            </h2>
-          </div>
+              {/* --- QR CODE SECTION --- */}
+              <div className="relative p-4 border-2 border-dashed border-slate-200 rounded-2xl mb-8 bg-white shadow-inner">
+                <div className="bg-white p-2 rounded-xl">
+                    {qrValue && (
+                        <QRCode
+                            value={qrValue}
+                            size={200}
+                            className="w-full h-full object-contain"
+                            level="H" 
+                        />
+                    )}
+                </div>
+              </div>
 
-          <button 
-            onClick={generateQRCallback}
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl flex items-center justify-center space-x-2 transition-all active:scale-95 shadow-lg shadow-slate-200"
-          >
-            <RefreshCw className={`w-5 h-5 ${timeLeft === 60 ? 'animate-spin' : ''}`} />
-            <span>Regenerate Now</span>
-          </button>
+              <div className="text-center mb-6 w-full">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                    <Clock size={16} className="text-slate-400" />
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Code Expires In</p>
+                </div>
+                <h2 className={`text-4xl font-black font-mono tracking-tighter ${timeLeft <= 10 ? 'text-red-500' : 'text-slate-900'}`}>
+                  0:{timeLeft < 10 ? `0${timeLeft}` : timeLeft}
+                </h2>
+              </div>
 
-          <div className="w-full border-t border-slate-100 mt-6 pt-4 flex items-center justify-center space-x-2 text-slate-400">
-            <Shield className="w-3 h-3" />
-            <p className="text-[10px] font-bold uppercase tracking-wider">Encrypted Access Token</p>
-          </div>
+              <button 
+                onClick={generateQRCallback}
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl flex items-center justify-center space-x-2 transition-all active:scale-95 shadow-lg shadow-slate-200"
+              >
+                <RefreshCw className={`w-5 h-5 ${timeLeft === 60 ? 'animate-spin' : ''}`} />
+                <span>Regenerate Now</span>
+              </button>
+
+              <div className="w-full border-t border-slate-100 mt-6 pt-4 flex items-center justify-center space-x-2 text-slate-400">
+                <Shield className="w-3 h-3" />
+                <p className="text-[10px] font-bold uppercase tracking-wider">Encrypted Access Token</p>
+              </div>
+            </>
+          )}
         </div>
 
         {/* 4. INFO CARDS SECTION */}

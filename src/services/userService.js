@@ -18,6 +18,7 @@ export const createUserDoc = async (uid, data) => {
     role: data.role,
     phone: "",
     status: "active",
+    isPremium: false,
     createdAt: serverTimestamp(),
   });
 };

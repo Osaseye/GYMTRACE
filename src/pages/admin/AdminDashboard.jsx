@@ -84,7 +84,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
         <h1 className="text-2xl font-bold text-slate-800">Dashboard Overview</h1>
         <div className="text-sm text-slate-500">
           Last updated: Today, {new Date().toLocaleTimeString()}

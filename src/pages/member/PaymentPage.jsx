@@ -1,7 +1,31 @@
-import React from 'react';
-import { CreditCard, DollarSign, Calendar, Clock, Download, ChevronRight, CheckCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { CreditCard, DollarSign, Calendar, Clock, Download, ChevronRight, CheckCircle, Zap } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { updateUserDoc } from '../../services/userService';
 
 const PaymentPage = () => {
+  const { user, userData, refreshUserData } = useAuth();
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const isPremium = userData?.isPremium === true;
+
+  const handleUpgrade = async () => {
+    if (!user) return;
+    setIsProcessing(true);
+    try {
+      // Mock payment delay
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await updateUserDoc(user.uid, { isPremium: true });
+      await refreshUserData();
+      alert('Successfully upgraded to Premium!');
+    } catch (error) {
+      console.error(error);
+      alert('Payment failed. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const paymentHistory = [
     // Initialize with empty array for production/backend integration
     // {
@@ -39,36 +63,65 @@ const PaymentPage = () => {
             <div className="relative z-10 flex justify-between items-start mb-6">
               <div>
                 <p className="text-gray-400 text-sm font-medium uppercase tracking-wider mb-1">Current Plan</p>
-                <h2 className="text-2xl font-display font-bold">Pro Member</h2>
+                <h2 className="text-2xl font-display font-bold">{isPremium ? "Pro Member" : "Basic Member"}</h2>
               </div>
-              <span className="bg-primary/20 text-primary px-3 py-1 rounded-full text-xs font-bold border border-primary/20">ACTIVE</span>
+              <span className={`px-3 py-1 rounded-full text-xs font-bold border ${isPremium ? "bg-primary/20 text-primary border-primary/20" : "bg-gray-700/50 text-gray-300 border-gray-600"}`}>
+                {isPremium ? "ACTIVE" : "FREE"}
+              </span>
             </div>
 
-            <div className="text-3xl font-bold mb-1">₦25,000<span className="text-lg font-normal text-gray-400">/mo</span></div>
-            <p className="text-gray-400 text-sm mb-6">Next billing date: March 24, 2026</p>
+            <div className="text-3xl font-bold mb-1">{isPremium ? "₦25,000" : "₦0"}<span className="text-lg font-normal text-gray-400">/mo</span></div>
+            <p className="text-gray-400 text-sm mb-6">{isPremium ? "Next billing date: March 24, 2026" : "Upgrade to Pro for full access"}</p>
 
             <div className="space-y-3 mb-8">
-              <div className="flex items-center gap-3 text-sm text-gray-300">
-                <CheckCircle size={16} className="text-primary" />
-                <span>Unlimited Gym Access</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm text-gray-300">
-                <CheckCircle size={16} className="text-primary" />
-                <span>2 Free PT Sessions/mo</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm text-gray-300">
-                <CheckCircle size={16} className="text-primary" />
-                <span>Access to Sauna & Pool</span>
-              </div>
+              {!isPremium ? (
+                <>
+                  <div className="flex items-center gap-3 text-sm text-gray-400">
+                    <Clock size={16} />
+                    <span>Limited Gym Access</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-gray-400 line-through opacity-50">
+                    <CheckCircle size={16} />
+                    <span>No QR Code Access</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3 text-sm text-gray-300">
+                    <CheckCircle size={16} className="text-primary" />
+                    <span>Unlimited Gym Access</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-gray-300">
+                    <Zap size={16} className="text-amber-400" />
+                    <span>Premium QR Code Generation</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-gray-300">
+                    <CheckCircle size={16} className="text-primary" />
+                    <span>2 Free PT Sessions/mo</span>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="flex gap-3">
-              <button className="flex-1 bg-white text-background-dark py-2.5 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-                Manage Plan
-              </button>
-              <button className="flex-1 border border-white/20 text-white py-2.5 rounded-lg font-semibold hover:bg-white/10 transition-colors">
-                Cancel
-              </button>
+              {!isPremium ? (
+                <button 
+                  onClick={handleUpgrade}
+                  disabled={isProcessing}
+                  className="flex-1 bg-amber-500 text-white py-2.5 rounded-lg font-bold hover:bg-amber-600 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
+                >
+                  {isProcessing ? 'Processing Payment...' : 'Upgrade Now - ₦25,000'}
+                </button>
+              ) : (
+                <>
+                  <button className="flex-1 bg-white text-background-dark py-2.5 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                    Manage Plan
+                  </button>
+                  <button className="flex-1 border border-white/20 text-white py-2.5 rounded-lg font-semibold hover:bg-white/10 transition-colors">
+                    Cancel
+                  </button>
+                </>
+              )}
             </div>
           </div>
 

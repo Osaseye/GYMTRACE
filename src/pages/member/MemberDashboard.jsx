@@ -21,6 +21,7 @@ import { getBookingsByMember } from '../../services/bookingService';
 const MemberDashboard = () => {
     const { user, userData } = useAuth();
     const firstName = userData?.name?.split(' ')[0] || 'Member';
+    const isPremium = userData?.isPremium === true;
 
     const [weeklyData, setWeeklyData] = useState([
       { name: 'Mon', visits: 0 },
@@ -95,12 +96,14 @@ const MemberDashboard = () => {
               <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
                 <Zap size={24} />
               </div>
-              <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-1 rounded-full">ACTIVE</span>
+              <span className={`text-xs font-bold px-2 py-1 rounded-full ${isPremium ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
+                {isPremium ? 'ACTIVE' : 'FREE'}
+              </span>
             </div>
             <div>
               <p className="text-sm text-gray-500 font-medium">Subscription Plan</p>
-              <h3 className="text-xl font-bold text-gray-900 mt-1">Premium</h3>
-              <p className="text-xs text-gray-400 mt-1">Expires in 12 days</p>
+              <h3 className="text-xl font-bold text-gray-900 mt-1">{isPremium ? 'Premium' : 'Basic Member'}</h3>
+              <p className="text-xs text-gray-400 mt-1">{isPremium ? 'Active Subscription' : 'Upgrade for full access'}</p>
             </div>
           </div>
   
