@@ -48,7 +48,14 @@ service cloud.firestore {
     // 4. Workouts - Members manage their own logs, Trainers/Admins can view/manage.
     match /workouts/{docId} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && (
+      allow create: if isAuthenticated() && (
+        request.resource.data.userId == request.auth.uid || 
+        request.resource.data.memberId == request.auth.uid || 
+        isTrainer() || 
+        isAdmin()
+      );
+      allow update, delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
         resource.data.memberId == request.auth.uid || 
         isTrainer() || 
         isAdmin()

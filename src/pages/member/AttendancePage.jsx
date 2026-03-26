@@ -78,17 +78,7 @@ const AttendancePage = () => {
           <h1 className="text-2xl font-bold text-gray-900">Attendance History</h1>
           <p className="text-sm text-gray-500 mt-1">Track your gym visits and duration.</p>
         </div>
-        
-        <div className="flex items-center gap-2">
-           <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
-            <Filter size={16} />
-            <span>Filter</span>
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm">
-            <Calendar size={16} />
-            <span>Select Date</span>
-          </button>
-        </div>
+
       </div>
 
       {/* Stats Cards */}

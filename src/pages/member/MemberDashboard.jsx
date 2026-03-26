@@ -75,9 +75,6 @@ const MemberDashboard = () => {
           </div>
           
           <div className="flex items-center gap-3">
-            <button className="p-2.5 rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors">
-              <Moon size={20} />
-            </button>
             <Link 
               to="/member/qr" 
               className="flex items-center gap-2 bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-200 active:scale-95"
@@ -107,22 +104,6 @@ const MemberDashboard = () => {
             </div>
           </div>
   
-          {/* Sessions Remaining */}
-          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-4">
-            <div className="flex justify-between items-start">
-              <div className="p-3 bg-orange-50 text-orange-600 rounded-xl">
-                <Activity size={24} />
-              </div>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 font-medium">Sessions Remaining</p>
-              <h3 className="text-xl font-bold text-gray-900 mt-1">0 <span className="text-sm text-gray-400 font-medium">/ 0</span></h3>
-              <div className="w-full bg-gray-100 h-1.5 rounded-full mt-2 overflow-hidden">
-                <div className="bg-orange-500 h-full rounded-full" style={{ width: '0%' }}></div>
-              </div>
-            </div>
-          </div>
-  
           {/* Last Check-In */}
           <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-4">
             <div className="flex justify-between items-start">
@@ -143,9 +124,6 @@ const MemberDashboard = () => {
                 <div className="p-3 bg-pink-50 text-pink-600 rounded-xl">
                   <CalendarCheck size={24} />
                 </div>
-                <Link to="/member/booking" className="text-gray-400 hover:text-gray-600">
-                  <ChevronRight size={20} />
-                </Link>
              </div>
              <div>
                <p className="text-sm text-gray-500 font-medium">Next Booking</p>
