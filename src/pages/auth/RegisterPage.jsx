@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { registerUser } from '../../services/authService';
+import { registerUser, sendEmailVerification } from '../../services/authService';
 import { createUserDoc } from '../../services/userService';
 import logo from '../../assets/logo.png';
 
@@ -49,13 +49,16 @@ const RegisterPage = () => {
   const onSubmit = async (data) => {
     try {
       const cred = await registerUser(data.email, data.password);
+      
+      await sendEmailVerification(cred.user);
+
       await createUserDoc(cred.user.uid, {
         name: data.fullName,
         email: data.email,
         role: data.role,
       });
 
-      toast.success('Account created successfully!');
+      toast.success('Account created successfully! A verification link has been sent to your email.');
 
       if (data.role === 'trainer') {
         navigate('/trainer/dashboard');

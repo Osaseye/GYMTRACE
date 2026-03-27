@@ -168,19 +168,7 @@ const BookingPage = () => {
         </div>
       )}
 
-      {/* "Not Sure" Section */}
-      <div className="bg-gradient-to-r from-background-dark to-blue-900 rounded-2xl p-8 md:p-12 text-white relative overflow-hidden mb-8">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-        <div className="relative z-10 max-w-2xl">
-          <h2 className="text-2xl md:text-3xl font-display font-bold mb-4">Not sure which trainer is right for you?</h2>
-          <p className="text-gray-300 mb-8 text-lg">
-            Take our quick 2-minute assessment and get matched with the perfect coach based on your goals, schedule, and preferences.
-          </p>
-          <button className="bg-primary text-white px-8 py-3 rounded-lg font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/25">
-            Start Assessment
-          </button>
-        </div>
-      </div>
+
 
       {/* Booking Modal */}
       {bookingModal && (

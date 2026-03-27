@@ -1,9 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('');
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = ['home', 'features', 'cta'];
+      let current = '';
+
+      for (const section of sections) {
+        const el = document.getElementById(section);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= 150 && rect.bottom >= 150) {
+            current = section;
+          }
+        }
+      }
+      setActiveSection(current);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Check on init
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleLinkClick = (e, id) => {
+    e.preventDefault();
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+    setIsOpen(false);
+  };
+
+  const getLinkClass = (id) =>
+    `transition-colors font-medium ${
+      activeSection === id ? 'text-primary' : 'text-gray-600 hover:text-primary'
+    }`;
+
+  const getMobileLinkClass = (id) =>
+    `block px-3 py-2 rounded-md text-base font-medium ${
+      activeSection === id
+        ? 'text-primary bg-primary/10'
+        : 'text-gray-700 hover:text-primary hover:bg-gray-50'
+    }`;
 
   return (
     <nav className="fixed w-full bg-white z-50 shadow-sm border-b border-gray-100">
@@ -21,9 +66,9 @@ const Navbar = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#features" className="text-gray-600 hover:text-primary transition-colors font-medium">features</a>
-            <a href="#about" className="text-gray-600 hover:text-primary transition-colors font-medium">about</a>
-            <a href="#testimonials" className="text-gray-600 hover:text-primary transition-colors font-medium">testimonials</a>
+            <a href="#home" onClick={(e) => handleLinkClick(e, 'home')} className={getLinkClass('home')}>Home</a>
+            <a href="#features" onClick={(e) => handleLinkClick(e, 'features')} className={getLinkClass('features')}>Features</a>
+            <a href="#cta" onClick={(e) => handleLinkClick(e, 'cta')} className={getLinkClass('cta')}>Get Started</a>
             <div className="flex items-center space-x-4 ml-4">
               <Link to="/login" className="text-gray-600 hover:text-primary font-medium transition-colors">
                 Login
@@ -50,8 +95,9 @@ const Navbar = () => {
       {isOpen && (
         <div className="md:hidden bg-white border-b border-gray-100">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <a href="#features" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50">Features</a>
-            <a href="#about" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50">About</a>
+            <a href="#home" onClick={(e) => handleLinkClick(e, 'home')} className={getMobileLinkClass('home')}>Home</a>
+            <a href="#features" onClick={(e) => handleLinkClick(e, 'features')} className={getMobileLinkClass('features')}>Features</a>
+            <a href="#cta" onClick={(e) => handleLinkClick(e, 'cta')} className={getMobileLinkClass('cta')}>Get Started</a>
             <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col space-y-2 px-3">
               <Link to="/login" className="block text-center py-2 text-gray-600 hover:text-primary font-medium">
                 Login

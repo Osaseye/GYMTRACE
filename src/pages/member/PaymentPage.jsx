@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { CreditCard, DollarSign, Calendar, Clock, Download, ChevronRight, CheckCircle, Zap, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { updateUserDoc } from '../../services/userService';
+import { toast } from 'sonner';
+import { arrayUnion, Timestamp } from 'firebase/firestore';
 
 const PaymentPage = () => {
   const { user, userData, refreshUserData } = useAuth();
@@ -23,17 +25,26 @@ const PaymentPage = () => {
       // Mock payment delay
       await new Promise((resolve) => setTimeout(resolve, 1500));
       
+      const newTransaction = {
+        id: `#INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+        description: type === 'one-time' ? 'One-time Pass' : 'Monthly Membership (Pro)',
+        amount: type === 'one-time' ? '₦500' : '₦25,000',
+        status: 'Paid',
+        method: 'Paystack'
+      };
+
       const updateData = type === 'one-time' 
-        ? { oneTimePass: true } // just one-time pass
-        : { isPremium: true, oneTimePass: false }; // monthly recurring
+        ? { oneTimePass: true, planType: 'one-time', oneTimePassRemaining: 1, billingHistory: arrayUnion(newTransaction) } // just one-time pass
+        : { isPremium: true, oneTimePass: false, planType: 'premium', billingHistory: arrayUnion(newTransaction) }; // monthly recurring
 
       await updateUserDoc(user.uid, updateData);
       await refreshUserData();
-      alert(type === 'one-time' ? 'One-time Pass activated!' : `Successfully upgraded to Premium!`);
+      toast.success(type === 'one-time' ? 'One-time Pass activated!' : `Successfully upgraded to Premium!`);
       setShowManagePlanModal(false);
     } catch (error) {
       console.error(error);
-      alert('Payment failed. Please try again.');
+      toast.error('Payment failed. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -44,13 +55,13 @@ const PaymentPage = () => {
     setIsProcessing(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      await updateUserDoc(user.uid, { isPremium: false, oneTimePass: false });
+      await updateUserDoc(user.uid, { isPremium: false, oneTimePass: false, planType: 'basic' });
       await refreshUserData();
-      alert('Successfully downgraded to Basic plan.');
+      toast.success('Successfully downgraded to Basic plan.');
       setShowManagePlanModal(false);
     } catch (error) {
       console.error(error);
-      alert('Downgrade failed. Please try again.');
+      toast.error('Downgrade failed. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -58,21 +69,11 @@ const PaymentPage = () => {
 
   const handleAddPaymentMethod = (e) => {
     e.preventDefault();
-    alert('Payment method added successfully!');
+    toast.success('Payment method added successfully!');
     setShowAddPaymentModal(false);
   };
 
-  const paymentHistory = [
-    // Initialize with empty array for production/backend integration
-    // {
-    //   id: '#INV-2024-001',
-    //   date: 'Feb 24, 2026',
-    //   description: 'Monthly Membership (Pro)',
-    //   amount: '₦25,000',
-    //   status: 'Paid',
-    //   method: 'Paystack'
-    // },
-  ];
+  const paymentHistory = userData?.billingHistory || [];
 
   return (
     <div className="p-6 lg:p-10 min-h-screen bg-gray-50 text-gray-900 font-sans">
@@ -181,11 +182,6 @@ const PaymentPage = () => {
                   >
                     Manage Plan
                   </button>
-                  {isPremium && (
-                    <button className="flex-1 border border-white/20 text-white py-2.5 rounded-lg font-semibold hover:bg-white/10 transition-colors">
-                      Cancel
-                    </button>
-                  )}
                 </>
               )}
             </div>
@@ -199,7 +195,6 @@ const PaymentPage = () => {
                    <h3 className="text-lg font-display font-bold text-background-dark">Payment Method</h3>
                    <p className="text-gray-500 text-sm">Default for recurring billing</p>
                 </div>
-                <button className="text-primary text-sm font-medium hover:underline">Edit</button>
               </div>
 
               <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200 mb-4">
@@ -228,24 +223,14 @@ const PaymentPage = () => {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
              <h3 className="text-lg font-display font-bold text-background-dark">Billing History</h3>
-             <div className="flex gap-2">
-               <button className="text-sm text-gray-600 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-md transition-colors border border-gray-200">
-                 Download All
-               </button>
-               <button className="text-sm text-gray-600 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-md transition-colors border border-gray-200">
-                 Filter
-               </button>
-             </div>
           </div>
           
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50/50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
-                  <th className="px-6 py-4 font-medium">Invoice</th>
-                  <th className="px-6 py-4 font-medium">Date</th>
-                  <th className="px-6 py-4 font-medium">Description</th>
-                  <th className="px-6 py-4 font-medium">Amount</th>
+                  <th className="px-6 py-4 font-medium">Invoice Date</th>
+                  <th className="px-6 py-4 font-medium">Subscription Amount</th>
                   <th className="px-6 py-4 font-medium">Status</th>
                   <th className="px-6 py-4 font-medium text-right">Action</th>
                 </tr>
@@ -253,48 +238,56 @@ const PaymentPage = () => {
               <tbody className="divide-y divide-gray-50">
                 {paymentHistory.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
                       No payment history available
                     </td>
                   </tr>
                 ) : (
-                  paymentHistory.map((payment, index) => (
-                  <tr key={index} className="hover:bg-gray-50/50 transition-colors group">
-                    <td className="px-6 py-4 text-sm font-medium text-primary">
-                      {payment.id}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <Calendar size={14} className="text-gray-400" />
-                        {payment.date}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-background-dark font-medium">
-                      {payment.description}
-                      <div className="text-xs text-gray-400 font-normal mt-0.5">{payment.method}</div>
-                    </td>
-                    <td className="px-6 py-4 text-sm font-bold text-gray-900">
-                      {payment.amount}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`
-                        inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border
-                        ${payment.status === 'Paid' 
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
-                          : 'bg-red-50 text-red-700 border-red-100'
-                        }
-                      `}>
-                        {payment.status === 'Paid' ? <CheckCircle size={12} /> : <Clock size={12} />}
-                        {payment.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button className="text-gray-400 hover:text-primary transition-colors p-2 hover:bg-gray-100 rounded-lg">
-                        <Download size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                )))}
+                  paymentHistory.map((payment, index) => {
+                    let amountToDisplay = '₦0';
+                    let description = payment.description || '';
+                    const descLower = description.toLowerCase();
+                    if (descLower.includes('premium') || descLower.includes('pro')) {
+                      amountToDisplay = '₦25,000';
+                    } else if (descLower.includes('one-time') || descLower.includes('pass')) {
+                      amountToDisplay = '₦509';
+                    } else if (payment.amount) {
+                      amountToDisplay = payment.amount;
+                    }
+
+                    return (
+                      <tr key={index} className="hover:bg-gray-50/50 transition-colors group">
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <Calendar size={14} className="text-gray-400" />
+                            {payment.date}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm font-bold text-gray-900">
+                          {amountToDisplay}
+                          <div className="text-xs text-gray-400 font-normal mt-0.5">{description}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`
+                            inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border
+                            ${payment.status === 'Paid' 
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+                              : 'bg-red-50 text-red-700 border-red-100'
+                            }
+                          `}>
+                            {payment.status === 'Paid' ? <CheckCircle size={12} /> : <Clock size={12} />}
+                            {payment.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button className="text-gray-400 hover:text-primary transition-colors p-2 hover:bg-gray-100 rounded-lg">
+                            <Download size={18} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

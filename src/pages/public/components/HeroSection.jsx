@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 
 const HeroSection = () => {
   return (
-    <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-background-light">
+    <section id="home" className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-background-light">
       <div className="absolute inset-0 z-0">
         <div className="absolute -top-24 -right-24 bg-primary/10 w-96 h-96 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 bg-blue-100/30 w-full h-1/2 -skew-y-3 pointer-events-none"></div>
@@ -30,9 +30,6 @@ const HeroSection = () => {
             <div className="mt-10 flex items-center justify-center lg:justify-start gap-8 text-gray-500 text-sm font-medium">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-green-500"></div> Real-time Tracking
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-blue-500"></div> AI Analytics
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-purple-500"></div> Instant Access

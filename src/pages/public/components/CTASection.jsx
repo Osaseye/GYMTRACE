@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 const CTASection = () => {
   return (
-    <section className="py-20 bg-background-dark text-white text-center">
+    <section id="cta" className="py-20 bg-background-dark text-white text-center">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl sm:text-4xl font-display font-bold mb-6">
           Ready to reach your fitness goals?

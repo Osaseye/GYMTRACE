@@ -60,19 +60,18 @@ const WorkoutsPage = () => {
       we.setDate(we.getDate() + 6);
       const weekW = await getWorkoutsForWeek(user.uid, fmtDate(ws), fmtDate(we));
 
-      // Build weekly view
-      const schedule = dayLabels.map((label, i) => {
-        const d = new Date(ws);
-        d.setDate(d.getDate() + i);
-        const dateStr = fmtDate(d);
-        const match = weekW.find((w) => w.date === dateStr);
-        const isToday = dateStr === fmtDate(now);
+      // Build weekly view using actual user data, no padding mock days
+      const schedule = weekW.map((w) => {
+        const d = new Date(w.date + 'T00:00:00');
+        const dayIndex = d.getDay();
+        const adjustedIndex = dayIndex === 0 ? 6 : dayIndex - 1;
+        const isToday = w.date === fmtDate(now);
         return {
-          day: label,
-          date: dateStr,
-          title: match ? match.title : 'Rest Day',
-          type: match ? (match.difficulty || 'Strength') : 'Rest',
-          status: isToday ? 'Today' : 'Upcoming',
+          day: dayLabels[adjustedIndex] || 'Unknown',
+          date: w.date,
+          title: w.title,
+          type: w.difficulty || 'Strength',
+          status: isToday ? 'Today' : (w.date < fmtDate(now) ? 'Completed' : 'Upcoming'),
         };
       });
       setWeeklySchedule(schedule);
@@ -91,7 +90,7 @@ const WorkoutsPage = () => {
   const todayStr = fmtDate(new Date());
   const todaysWorkout = workouts.find((w) => w.date === todayStr) || null;
 
-  const thisWeekCount = weeklySchedule.filter((d) => d.title !== 'Rest Day').length;
+  const thisWeekCount = weeklySchedule.length;
 
   // --- Form handlers ---
   const addExercise = () =>

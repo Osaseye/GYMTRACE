@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Calendar, 
-  Clock, 
   MapPin, 
   CheckCircle, 
-  Timer, 
   Search,
   Filter,
   ArrowUpDown,
@@ -82,7 +80,7 @@ const AttendancePage = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
@@ -107,17 +105,7 @@ const AttendancePage = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-              <Timer size={24} />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Avg. Duration</p>
-              <h3 className="text-2xl font-bold text-gray-900">—</h3>
-            </div>
-          </div>
-        </div>
+
       </div>
 
       {/* Main Table Card */}
@@ -149,9 +137,7 @@ const AttendancePage = () => {
                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Check-in / Out
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Duration
-                </th>
+
                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Location
                 </th>
@@ -181,12 +167,7 @@ const AttendancePage = () => {
                         <span className="text-xs text-gray-500">to {record.checkOut ? formatTime(record.checkOut) : '—'}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Clock size={16} className="text-gray-400" />
-                        —
-                      </div>
-                    </td>
+
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <MapPin size={16} className="text-gray-400" />

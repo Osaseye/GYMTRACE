@@ -12,7 +12,7 @@ import {
   TrendingUp,
   Wallet
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useAuth } from '../../context/AuthContext';
 import { getAttendanceByMember, getWeeklyAttendance } from '../../services/attendanceService';
@@ -20,8 +20,16 @@ import { getBookingsByMember } from '../../services/bookingService';
 
 const MemberDashboard = () => {
     const { user, userData } = useAuth();
+    const navigate = useNavigate();
     const firstName = userData?.name?.split(' ')[0] || 'Member';
     const isPremium = userData?.isPremium === true;
+    const isOneTimePass = userData?.oneTimePass === true || userData?.planType === 'one-time';
+    
+    let displayPlanName = 'Basic';
+    if (isPremium) displayPlanName = 'Premium';
+    else if (isOneTimePass) displayPlanName = 'One-Time Pass';
+    
+    const isActive = isPremium || isOneTimePass;
 
     const [weeklyData, setWeeklyData] = useState([
       { name: 'Mon', visits: 0 },
@@ -32,6 +40,14 @@ const MemberDashboard = () => {
       { name: 'Sat', visits: 0 },
       { name: 'Sun', visits: 0 },
     ]);
+    const [monthlyData, setMonthlyData] = useState([
+      { name: 'Week 1', visits: 0 },
+      { name: 'Week 2', visits: 0 },
+      { name: 'Week 3', visits: 0 },
+      { name: 'Week 4', visits: 0 },
+    ]);
+    const [activityView, setActivityView] = useState('This Week');
+    
     const [lastCheckIn, setLastCheckIn] = useState(null);
     const [totalVisits, setTotalVisits] = useState(0);
     const [nextBooking, setNextBooking] = useState(null);
@@ -47,6 +63,31 @@ const MemberDashboard = () => {
           ]);
           setWeeklyData(weekly);
           setTotalVisits(all.length);
+
+          // Calculate Monthly Data
+          const now = new Date();
+          const thirtyDaysAgo = new Date(now);
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          
+          let monthCounts = [0, 0, 0, 0];
+          all.forEach(record => {
+            const date = record.checkIn?.toDate();
+            if (date && date >= thirtyDaysAgo) {
+              const diffTime = Math.abs(now - date);
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              if (diffDays <= 7) monthCounts[3]++; // Week 4 (Latest)
+              else if (diffDays <= 14) monthCounts[2]++; // Week 3
+              else if (diffDays <= 21) monthCounts[1]++; // Week 2
+              else if (diffDays <= 28) monthCounts[0]++; // Week 1
+            }
+          });
+          setMonthlyData([
+            { name: 'Wk 1', visits: monthCounts[0] },
+            { name: 'Wk 2', visits: monthCounts[1] },
+            { name: 'Wk 3', visits: monthCounts[2] },
+            { name: 'Wk 4', visits: monthCounts[3] },
+          ]);
+
           if (all.length > 0 && all[0].checkIn?.toDate) {
             setLastCheckIn(all[0].checkIn.toDate());
           }
@@ -93,14 +134,14 @@ const MemberDashboard = () => {
               <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
                 <Zap size={24} />
               </div>
-              <span className={`text-xs font-bold px-2 py-1 rounded-full ${isPremium ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
-                {isPremium ? 'ACTIVE' : 'FREE'}
+              <span className={`text-xs font-bold px-2 py-1 rounded-full ${isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
+                {isActive ? 'ACTIVE' : 'FREE'}
               </span>
             </div>
             <div>
               <p className="text-sm text-gray-500 font-medium">Subscription Plan</p>
-              <h3 className="text-xl font-bold text-gray-900 mt-1">{isPremium ? 'Premium' : 'Basic Member'}</h3>
-              <p className="text-xs text-gray-400 mt-1">{isPremium ? 'Active Subscription' : 'Upgrade for full access'}</p>
+              <h3 className="text-xl font-bold text-gray-900 mt-1">{displayPlanName}</h3>
+              <p className="text-xs text-gray-400 mt-1">{isPremium ? 'Active Subscription' : isOneTimePass ? 'Active Pass' : 'Upgrade for full access'}</p>
             </div>
           </div>
   
@@ -144,7 +185,7 @@ const MemberDashboard = () => {
   
         {/* Charts & Balance Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Account Balance */}
+          {/* Plan Info */}
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 p-6 rounded-2xl shadow-lg text-white flex flex-col justify-between h-64 lg:col-span-1 relative overflow-hidden group">
              {/* Decorative Elements */}
              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-emerald-500/20 transition-colors duration-500"></div>
@@ -153,23 +194,23 @@ const MemberDashboard = () => {
              <div className="relative z-10">
                 <div className="flex items-center gap-3 mb-6">
                      <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
-                        <Wallet size={20} className="text-emerald-400"/>
+                        <Zap size={20} className="text-emerald-400"/>
                      </div>
-                     <span className="text-gray-300 font-medium text-sm">Main Balance</span>
+                     <span className="text-gray-300 font-medium text-sm">Target Plan</span>
                 </div>
-                <h2 className="text-4xl font-mono font-bold tracking-tight mb-2">₦ 0.00</h2>
+                <h2 className="text-3xl font-bold tracking-tight mb-2 capitalize">{displayPlanName}</h2>
                 <div className="flex items-center gap-2 text-emerald-400 text-xs font-medium bg-emerald-400/10 w-fit px-2 py-1 rounded-full">
-                     <TrendingUp size={12} />
-                     <span>+0% this month</span>
+                     <Activity size={12} />
+                     <span>{isActive ? 'Active subscription/pass' : 'Limited access'}</span>
                 </div>
              </div>
              
              <div className="flex gap-3 relative z-10 mt-auto">
-                 <button className="flex-1 bg-white text-gray-900 py-2.5 rounded-xl text-sm font-bold hover:bg-gray-100 transition-colors shadow-sm">
-                     Top Up
-                 </button>
-                 <button className="flex-1 bg-white/10 text-white backdrop-blur-sm py-2.5 rounded-xl text-sm font-semibold hover:bg-white/20 transition-colors border border-white/10">
-                     History
+                 <button 
+                     onClick={() => navigate('/member/payments')}
+                     className="flex-1 bg-white text-gray-900 py-2.5 rounded-xl text-sm font-bold hover:bg-gray-100 transition-colors shadow-sm block text-center"
+                 >
+                     Manage Payments
                  </button>
              </div>
           </div>
@@ -178,18 +219,22 @@ const MemberDashboard = () => {
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm lg:col-span-2 flex flex-col">
             <div className="flex justify-between items-center mb-6">
                <div>
-                  <h3 className="text-lg font-bold text-gray-900">Weekly Activity</h3>
-                  <p className="text-sm text-gray-500">Your gym visits this week</p>
+                  <h3 className="text-lg font-bold text-gray-900">{activityView === 'This Week' ? 'Weekly' : 'Monthly'} Activity</h3>
+                  <p className="text-sm text-gray-500">Your gym visits {activityView === 'This Week' ? 'this week' : 'this past month'}</p>
                </div>
-               <select className="bg-gray-50 border border-gray-200 text-gray-600 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block px-3 py-1.5 outline-none">
-                  <option>This Week</option>
-                  <option>Last Week</option>
+               <select 
+                  value={activityView}
+                  onChange={(e) => setActivityView(e.target.value)}
+                  className="bg-gray-50 border border-gray-200 text-gray-600 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block px-3 py-1.5 outline-none"
+               >
+                  <option value="This Week">This Week</option>
+                  <option value="This Month">This Month</option>
                </select>
             </div>
             
             <div className="flex-1 w-full min-h-[200px]">
                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={weeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <BarChart data={activityView === 'This Week' ? weeklyData : monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                      <XAxis 
                         dataKey="name" 
@@ -202,14 +247,14 @@ const MemberDashboard = () => {
                         axisLine={false} 
                         tickLine={false} 
                         tick={{ fill: '#9ca3af', fontSize: 12 }} 
-                        ticks={[0, 1, 2, 3, 4]}
+                        allowDecimals={false}
                      />
                      <Tooltip 
                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                         cursor={{ fill: '#f9fafb' }}
                      />
                      <Bar dataKey="visits" radius={[4, 4, 0, 0]} barSize={32}>
-                        {weeklyData.map((entry, index) => (
+                        {(activityView === 'This Week' ? weeklyData : monthlyData).map((entry, index) => (
                            <Cell key={`cell-${index}`} fill={entry.visits > 0 ? '#10b981' : '#e5e7eb'} />
                         ))}
                      </Bar>

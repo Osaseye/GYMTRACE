@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, Calendar, Star, Clock, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getTrainerClients, getTodayTrainerBookings, getTrainerBookings } from '../../services/bookingService';
 
 const TrainerDashboard = () => {
     const { user, userData } = useAuth();
+    const navigate = useNavigate();
     const firstName = userData?.name?.split(' ')[0] || 'Trainer';
 
     const [clientCount, setClientCount] = useState(0);
@@ -92,7 +94,10 @@ const TrainerDashboard = () => {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-6 border-b border-gray-100 flex items-center justify-between">
                     <h2 className="text-lg font-bold text-gray-900">Upcoming Sessions</h2>
-                    <button className="text-emerald-600 text-sm font-semibold hover:text-emerald-700 flex items-center gap-1">
+                    <button 
+                        onClick={() => navigate('/trainer/schedule')}
+                        className="text-emerald-600 text-sm font-semibold hover:text-emerald-700 flex items-center gap-1"
+                    >
                         View Schedule <ArrowRight size={16} />
                     </button>
                 </div>
